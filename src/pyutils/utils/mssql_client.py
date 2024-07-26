@@ -85,8 +85,8 @@ class MsSqlClient:
 if __name__ == "__main__":
     MSSQL_DB = {
         "host": "47.94.219.54",
-        "user": "BIRead",
-        "passwd": "9o8l&JPQ*c_M^fim~O",
+        "user": "xxxxx",
+        "passwd": "9o8l&JPQ*c_M^fxxxx",
         "db": "AIS20201114183546",
         "port": 1433,
     }

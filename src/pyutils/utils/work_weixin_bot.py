@@ -84,9 +84,7 @@ def send_img(key, md5, base64_data):
 
 @retry(tries=2, delay=60)
 def upload_media(key, file_name, data):
-    url = (
-        f"https://qyapi.weixin.qq.com/cgi-bin/webhook/upload_media?key={key}&type=file"
-    )
+    url = f"https://qyapi.weixin.qq.com/cgi-bin/webhook/upload_media?key={key}&type=file"
     res = requests.post(url, files={"image": (file_name, data)})
     if res.json().get("errcode") == 45009:  # 接口调用超过限制
         raise ValueError(res.text)
@@ -129,7 +127,7 @@ if __name__ == "__main__":
     # content = """
     # 你好，这是一条测试消息
     # """
-    # send_text("d94aa6fc-1ee7-4515-8704-54aec79a2a68", content, ["@all"])
+    # send_text("d94aa6fc-1ee7-4515-xxxx-54aec79a2a68", content, ["@all"])
     content = """
         实时新增用户反馈<font color=\"warning\">132例</font>，请相关同事注意。\n
          >类型:<font color=\"comment\">用户反馈</font>

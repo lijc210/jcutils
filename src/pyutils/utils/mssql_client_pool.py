@@ -84,9 +84,9 @@ class MsSqlClientPool:
 if __name__ == "__main__":
     MSSQL_DB = {
         "host": "47.94.219.54",
-        "user": "BIRead",
-        "passwd": "9o8l&JPQ*c_M^fim~O",
-        "db": "AIS20201114183546",
+        "user": "xxxxxxxx",
+        "passwd": "9o8l&JPQ*c_M^fxxxx",
+        "db": "AIS2020111418xxxx",
         "port": 1433,
     }
     mssql_client = MsSqlClientPool(conn_dict=MSSQL_DB)

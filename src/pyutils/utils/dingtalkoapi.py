@@ -48,11 +48,7 @@ class Dingtalk:
         获取token
         :return:
         """
-        resp = get(
-            "https://oapi.dingtalk.com/gettoken?corpid={}&corpsecret={}".format(
-                self.corpid, self.corpsecret
-            )
-        )
+        resp = get("https://oapi.dingtalk.com/gettoken?corpid={}&corpsecret={}".format(self.corpid, self.corpsecret))
         access_token = resp.json()["access_token"]
         return access_token
 
@@ -63,9 +59,7 @@ class Dingtalk:
         :return:
         """
         resp_dict = get(
-            "https://oapi.dingtalk.com/user/get?access_token={}&userid={}".format(
-                self.access_token, userid
-            )
+            "https://oapi.dingtalk.com/user/get?access_token={}&userid={}".format(self.access_token, userid)
         ).json()
         return resp_dict
 
@@ -74,11 +68,7 @@ class Dingtalk:
         获取部门列表
         :return:
         """
-        resp_dict = get(
-            "https://oapi.dingtalk.com/department/list?access_token={}".format(
-                self.access_token
-            )
-        ).json()
+        resp_dict = get("https://oapi.dingtalk.com/department/list?access_token={}".format(self.access_token)).json()
         # print (resp_dict)
         return resp_dict
 
@@ -117,9 +107,7 @@ class Dingtalk:
             offset = offset + size
         return userlist_all
 
-    def get_attendance_listRecord(
-        self, workDateFrom=None, workDateTo=None, userIdList=None
-    ):
+    def get_attendance_listRecord(self, workDateFrom=None, workDateTo=None, userIdList=None):
         """
         获取打卡记录
         :param workDateFrom:查询考勤打卡记录的起始工作日。格式为“yyyy-MM-dd hh:mm:ss”，hh:mm:ss可以使用00:00:00，具体查询的时候不会起作用，最后将返回此日期从0点到24点的结果
@@ -134,17 +122,13 @@ class Dingtalk:
             "isI18n": "false",
         }
         resp_dict = post(
-            "https://oapi.dingtalk.com/attendance/listRecord?access_token={}".format(
-                self.access_token
-            ),
+            "https://oapi.dingtalk.com/attendance/listRecord?access_token={}".format(self.access_token),
             json=post_data,
         ).json()
         # print (json.dumps(resp_dict))
         return resp_dict
 
-    def get_attendance_list(
-        self, workDateFrom=None, workDateTo=None, userIdList=None, offset=0, limit=50
-    ):
+    def get_attendance_list(self, workDateFrom=None, workDateTo=None, userIdList=None, offset=0, limit=50):
         """
         获取打卡结果
         :param workDateFrom:查询考勤打卡记录的起始工作日。格式为“yyyy-MM-dd hh:mm:ss”，hh:mm:ss可以使用00:00:00，具体查询的时候不会起作用，最后将返回此日期从0点到24点的结果
@@ -165,9 +149,7 @@ class Dingtalk:
                 "limit": limit,
             }
             resp_dict = post(
-                "https://oapi.dingtalk.com/attendance/list?access_token={}".format(
-                    self.access_token
-                ),
+                "https://oapi.dingtalk.com/attendance/list?access_token={}".format(self.access_token),
                 json=post_data,
             ).json()
             hasMore = resp_dict.get("hasMore", False)
@@ -187,9 +169,7 @@ class Dingtalk:
         """
         post_data = {"process_instance_id": process_instance_id}
         resp_dict = post(
-            "https://oapi.dingtalk.com/topapi/processinstance/get?access_token={}".format(
-                self.access_token
-            ),
+            "https://oapi.dingtalk.com/topapi/processinstance/get?access_token={}".format(self.access_token),
             json=post_data,
         ).json()
         errcode = resp_dict.get("errcode")
@@ -209,9 +189,7 @@ class Dingtalk:
 
         post_data = {"offset": offset, "size": size}
         resp_dict = post(
-            "https://oapi.dingtalk.com/topapi/process/listbyuserid?access_token={}".format(
-                self.access_token
-            ),
+            "https://oapi.dingtalk.com/topapi/process/listbyuserid?access_token={}".format(self.access_token),
             json=post_data,
         ).json()
         process_list = resp_dict["result"]["process_list"]
@@ -248,9 +226,7 @@ class Dingtalk:
                 "userid_list": userid_list,
             }
             resp_dict = post(
-                "https://oapi.dingtalk.com/topapi/processinstance/listids?access_token={}".format(
-                    self.access_token
-                ),
+                "https://oapi.dingtalk.com/topapi/processinstance/listids?access_token={}".format(self.access_token),
                 json=post_data,
             ).json()
             errcode = resp_dict.get("errcode")
@@ -264,10 +240,10 @@ class Dingtalk:
 
 if __name__ == "__main__":
     # 测试账号
-    # corpid='dingl1wocjyjz34fowkm'
-    # corpsecret='2VB26Ar7iwRx59iFDqZT0yDoeg8wOimumZr80HwFh0PuBY7EkLpR-RiHTDMweRK8'
-    corpid = "dingqhzfnaiwaxyzg1dk"
-    corpsecret = "OQq7kn5qa3Tmn5H0_YUxeOfmbQ4wG2Mi3f7Qv-nTNLuDD8POP7iDSbeU6LxDBO4F"
+    # corpid='dingl1wocjyjz34fxxxx'
+    # corpsecret='2VB26Ar7iwRx59iFDqZT0yDoeg8wOimumZr80HwFh0PuBY7EkLpR-RiHTDMwxxxx'
+    corpid = "dingqhzfnaiwaxyzxxxx"
+    corpsecret = "OQq7kn5qa3Tmn5H0_YUxeOfmbQ4wG2Mi3f7Qv-nTNLuDD8POP7iDSbeU6LxDxxxx"
     dingtalk = Dingtalk(corpid=corpid, corpsecret=corpsecret)
     # print (json.dumps(dingtalk.get_department_list()))
     # print (json.dumps(dingtalk.get_listbypage(80593557), ensure_ascii=False))

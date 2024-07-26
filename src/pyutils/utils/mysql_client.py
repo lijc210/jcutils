@@ -110,8 +110,8 @@ class MySqlClient:
 if __name__ == "__main__":
     WORD_DB = {
         "host": "10.10.11.244",
-        "user": "biuser",
-        "passwd": "@biuser123",
+        "user": "xxxxx",
+        "passwd": "@biusxxxx",
         "db": "userdata",
         "port": 3309,
     }

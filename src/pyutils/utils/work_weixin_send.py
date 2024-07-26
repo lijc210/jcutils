@@ -47,9 +47,7 @@ class Weixin:
                 "text": {"content": str(text)},
                 "safe": "0",
             }
-            response = requests.post(
-                self.URL_SEND_MSG + token, json=payload, verify=False
-            )
+            response = requests.post(self.URL_SEND_MSG + token, json=payload, verify=False)
             response_json = response.json()
             if response_json["errcode"] == 0:
                 print("success")
@@ -134,8 +132,8 @@ if __name__ == "__main__":
         content = sys.argv[1]
     else:
         content = "测试"
-    corp_id = ("ww72ecd238eb208885",)
-    secret = ("rmP-6p-DHkMRG8FWioqjtal_bOYKypWcdEhd5rMXziw",)
+    corp_id = ("ww72ecd238ebxxxxxx",)
+    secret = ("rmP-6p-DHkMRG8FWioqjtal_bOYKypWcdEhdxxxxxxx",)
     weixin = Weixin(corp_id, secret)
     weixin.send(text=content, agentid=1000003, touser="@all", toparty="1")
 
