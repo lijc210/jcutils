@@ -1,6 +1,6 @@
 import json
 
-from src.pyutils.utils.tools import user_token, users_create
+from src.jcutils.utils.tools import user_token, users_create
 
 if __name__ == "__main__":
     user = {

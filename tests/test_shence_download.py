@@ -3,7 +3,7 @@ import os
 import requests
 
 from src.api.config import CONFIG
-from src.pyutils.utils.datetime_ import day_now, day_ops
+from src.jcutils.utils.datetime_ import day_now, day_ops
 
 token = CONFIG.SHENCE_API_SECRET
 
@@ -21,9 +21,7 @@ data = {
             where register_time between 1700236800000 and 1703001600000  /*MAX_QUERY_EXECUTION_TIME=1800*/"""
 }
 print(data)
-r = requests.post(
-    CONFIG.SHENCE_URL + f"/api/sql/query?token={token}&project=production", data=data
-)
+r = requests.post(CONFIG.SHENCE_URL + f"/api/sql/query?token={token}&project=production", data=data)
 file_path = os.path.join(CONFIG.TEMP_DIR, "shence.xlsx")
 print(file_path)
 with open(file_path, "w") as f:

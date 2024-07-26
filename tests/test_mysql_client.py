@@ -1,5 +1,5 @@
 from src.api.config import CONFIG
-from src.pyutils.utils.mysql_client import MySqlClient
+from src.jcutils.utils.mysql_client import MySqlClient
 
 apocalypse_client = MySqlClient(conn_dict=CONFIG.APOCALYPSE_DB, cursorclass="dict")
 

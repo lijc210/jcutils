@@ -13,9 +13,9 @@ import requests
 
 from src.api.config import CONFIG
 from src.api.logger import logger
-from src.pyutils.utils.datetime_ import day_now, day_ops
+from src.jcutils.utils.datetime_ import day_now, day_ops
 
-# from src.pyutils.utils.work_weixin_bot import send_text
+# from src.jcutils.utils.work_weixin_bot import send_text
 
 databi_url = CONFIG.DATABI_URL
 

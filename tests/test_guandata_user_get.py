@@ -1,7 +1,7 @@
 import requests
 
 from src.api.config import CONFIG
-from src.pyutils.utils.tools import user_token
+from src.jcutils.utils.tools import user_token
 
 databi_url = CONFIG.DATABI_URL
 

@@ -1,7 +1,7 @@
 [project]
-name = "pyutils"
-version = "0.1.0"
-description = "Add your description here"
+name = "jcutils"
+version = "0.2.0"
+description = "python utils"
 authors = [{ name = "lijc210", email = "lijc210@163.com" }]
 dependencies = [
     "apscheduler~=3.10.1",
@@ -49,6 +49,22 @@ dependencies = [
 ]
 readme = "README.md"
 requires-python = ">= 3.8"
+homepage = "https://github.com/lijc210/jcutils"
+repository = "https://github.com/lijc210/jcutils"
+documentation = "https://github.com/lijc210/jcutils"
+keywords = ["utils", "toolkit", "tools", "python"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+license = { text = "MIT License" }
+
+[project.urls]
+Homepage = "https://github.com/lijc210/jcutils"
+Documentation = "https://github.com/lijc210/jcutils"
+Source = "https://github.com/lijc210/jcutils"
+Tracker = "https://github.com/lijc210/jcutils/issues"
 
 [build-system]
 requires = ["hatchling"]
@@ -62,4 +78,4 @@ dev-dependencies = []
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/pyutils"]
+packages = ["src/jcutils"]

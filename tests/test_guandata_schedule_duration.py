@@ -14,9 +14,9 @@ import requests
 
 from src.api.config import CONFIG
 from src.api.logger import logger
-from src.pyutils.utils.datetime_ import day_now, day_ops
+from src.jcutils.utils.datetime_ import day_now, day_ops
 
-# from src.pyutils.utils.work_weixin_bot import send_text
+# from src.jcutils.utils.work_weixin_bot import send_text
 
 databi_url = CONFIG.DATABI_URL
 event_descriptions = {
@@ -102,9 +102,7 @@ def task_hour_detail():
         print(current_time.strftime("%Y-%m-%d %H:%M:%S"))
         current_time += datetime.timedelta(hours=1)
         startTime = current_time.strftime("%Y-%m-%d %H:00:00")
-        endTime = (current_time + datetime.timedelta(hours=1)).strftime(
-            "%Y-%m-%d %H:00:00"
-        )
+        endTime = (current_time + datetime.timedelta(hours=1)).strftime("%Y-%m-%d %H:00:00")
         print(startTime, endTime)
 
         token = get_token()
@@ -132,9 +130,7 @@ def check(start_time, end_time):
         duration = adict.get("duration", "")
         runningTime = adict.get("runningTime", "")
         finishedTime = adict.get("finishedTime", "")
-        data_list.append(
-            [objectName, type, userName, duration, runningTime, finishedTime]
-        )
+        data_list.append([objectName, type, userName, duration, runningTime, finishedTime])
 
     file_path = os.path.join(CONFIG.TEMP_DIR, "schedule_duration.csv")
     with codecs.open(file_path, "wb", "gbk") as csvfile:

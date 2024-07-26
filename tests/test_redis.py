@@ -1,13 +1,11 @@
 import json
 
 from src.api.config import CONFIG
-from src.pyutils.utils.redis_client import RedisClient
+from src.jcutils.utils.redis_client import RedisClient
 
 REDIS_DB = CONFIG.REDIS_DB
 
-rc = RedisClient(
-    host=REDIS_DB["host"], port=6379, db=0, password=REDIS_DB["password"]
-).client
+rc = RedisClient(host=REDIS_DB["host"], port=6379, db=0, password=REDIS_DB["password"]).client
 
 r = rc.hgetall("dss:437928")
 print("dimStoreShopHistoryRedis")

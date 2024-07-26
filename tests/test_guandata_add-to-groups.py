@@ -1,6 +1,6 @@
 import requests
 
-from src.pyutils.utils.tools import databi_url, user_token
+from src.jcutils.utils.tools import databi_url, user_token
 
 data_dict = {
     "token": user_token,

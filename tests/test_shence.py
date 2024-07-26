@@ -1,7 +1,7 @@
 import requests
 
 from src.api.config import CONFIG
-from src.pyutils.utils.datetime_ import day_now, day_ops
+from src.jcutils.utils.datetime_ import day_now, day_ops
 
 token = CONFIG.SHENCE_API_SECRET
 
@@ -14,8 +14,6 @@ data = {
     and time between '{start_time}' and '{end_time}' /*MAX_QUERY_EXECUTION_TIME=1800*/"
 }
 print(data)
-r = requests.post(
-    CONFIG.SHENCE_URL + f"/api/sql/query?token={token}&project=production", data=data
-)
+r = requests.post(CONFIG.SHENCE_URL + f"/api/sql/query?token={token}&project=production", data=data)
 total2 = int(r.text.replace("total", "").replace("\n", ""))
 print(total2)

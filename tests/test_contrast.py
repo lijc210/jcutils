@@ -1,4 +1,4 @@
-from src.pyutils.utils.clickhouse_client import ClickhouseClient
+from src.jcutils.utils.clickhouse_client import ClickhouseClient
 
 CK_DB1 = {
     "host": "clickhouse.gqshintra.com",

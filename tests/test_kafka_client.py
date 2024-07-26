@@ -1,4 +1,4 @@
-from src.pyutils.utils.kafka_client import PykafkaClient
+from src.jcutils.utils.kafka_client import PykafkaClient
 
 pykafka_client = PykafkaClient(hosts="10.194.6.80:9092,10.194.9.44:9092")
 topic_list = [
