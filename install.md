@@ -42,4 +42,3 @@ docker run -d -p 15603:15603 -e ENV=prod --name guoquan-apocalypse-app guoquan-a
 ## 推送到 github
 
 git remote set-url --add origin https://github.com/lijc210/jcutils
-
