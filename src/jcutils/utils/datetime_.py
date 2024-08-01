@@ -31,9 +31,7 @@ def ts2dt(ts):
         return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(ts))
 
 
-def give_day_ops(
-    dt=None, days=0, infmt="%Y-%m-%d %H:%M:%S", outfmt="%Y-%m-%d %H:%M:%S"
-):
+def give_day_ops(dt=None, days=0, infmt="%Y-%m-%d %H:%M:%S", outfmt="%Y-%m-%d %H:%M:%S"):
     """
     指定日期加减days天
     :param dt: 默认当前时间，2018-03-02 11:13:37
@@ -116,9 +114,7 @@ def firstDay_lastDay(dt=None, infmt="%Y-%m-%d %H:%M:%S", outfmt="%Y-%m-%d %H:%M:
     """
     year = time.strptime(dt, infmt).tm_year
     month = time.strptime(dt, infmt).tm_mon
-    firstDayWeekDay, monthRange = calendar.monthrange(
-        year, month
-    )  # 第一天的星期和当月的总天数
+    firstDayWeekDay, monthRange = calendar.monthrange(year, month)  # 第一天的星期和当月的总天数
     firstDay = date(year=year, month=month, day=1).strftime(outfmt)
     lastDay = date(year=year, month=month, day=monthRange).strftime(outfmt)
     return firstDay, lastDay
@@ -131,9 +127,7 @@ def get_before_month(dt=None, infmt="%Y-%m-%d %H:%M:%S", outfmt="%Y-%m-%d %H:%M:
     """
     year = time.strptime(dt, infmt).tm_year
     month = time.strptime(dt, infmt).tm_mon
-    before_month = (date(year=year, month=month, day=1) + timedelta(days=-1)).strftime(
-        outfmt
-    )
+    before_month = (date(year=year, month=month, day=1) + timedelta(days=-1)).strftime(outfmt)
     return before_month
 
 
@@ -144,12 +138,8 @@ def get_next_month(dt=None, infmt="%Y-%m-%d %H:%M:%S", outfmt="%Y-%m-%d %H:%M:%S
     """
     year = time.strptime(dt, infmt).tm_year
     month = time.strptime(dt, infmt).tm_mon
-    firstDayWeekDay, monthRange = calendar.monthrange(
-        year, month
-    )  # 第一天的星期和当月的总天数
-    next_month = (
-        date(year=year, month=month, day=monthRange) + timedelta(days=1)
-    ).strftime(outfmt)
+    firstDayWeekDay, monthRange = calendar.monthrange(year, month)  # 第一天的星期和当月的总天数
+    next_month = (date(year=year, month=month, day=monthRange) + timedelta(days=1)).strftime(outfmt)
     return next_month
 
 
@@ -205,18 +195,18 @@ def get_this_monday(outfmt="%Y-%m-%d"):
     获取本周周一日期
     :return: 返回周一的日期
     """
-    return datetime.strftime(
-        datetime.now() - timedelta(datetime.now().weekday()), outfmt
-    )
+    return datetime.strftime(datetime.now() - timedelta(datetime.now().weekday()), outfmt)
 
 
-def give_day_monday(dt=None, infmt="%Y-%m-%d", outfmt="%Y-%m-%d"):
+def get_comp_seconds(dt1=None, dt2=None, infmt="%Y-%m-%d %H:%M:%S", outfmt="%Y-%m"):
     """
-    获取指定日期周一日期
+    获取两个日期之间的时间差，单位秒
     :return: 返回周一的日期
     """
-    dt_s = datetime.strptime(str(dt), infmt)
-    return datetime.strftime(dt_s - timedelta(dt_s.weekday()), outfmt)
+    d1 = datetime.strptime(dt1, infmt)
+    d2 = datetime.strptime(dt2, infmt)
+    seconds = (d2 - d1).total_seconds()
+    return seconds
 
 
 if __name__ == "__main__":
@@ -236,6 +226,5 @@ if __name__ == "__main__":
     # doctest.testmod()
     # print((second_ops(seconds=-3600)))
     # print ts2dt(0)
-    print(
-        get_day_range(dt1="20190401", dt2="20190430", infmt="%Y%m%d", outfmt="%Y-%m-%d")
-    )
+    # print(get_day_range(dt1="20190401", dt2="20190430", infmt="%Y%m%d", outfmt="%Y-%m-%d"))
+    print(get_comp_seconds(dt1="20240801", dt2="20240802", infmt="%Y%m%d", outfmt="%Y-%m-%d"))

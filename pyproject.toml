@@ -1,6 +1,6 @@
 [project]
 name = "jcutils"
-version = "0.2.0"
+version = "0.3.1"
 description = "python utils"
 authors = [{ name = "lijc210", email = "lijc210@163.com" }]
 dependencies = [
@@ -37,8 +37,6 @@ dependencies = [
     "esdk-obs-python>=3.23.9.1",
     "alibabacloud_ecs20140526>=3.0.12",
     "alibabacloud_dataworks_public20200518>=4.7.2",
-    "pykafka>=2.8.0",
-    "playwright~=1.41.2",
     # pymssql 在macOS M 芯片的依赖
     # brew install freetds
     # brew install openssl
@@ -46,6 +44,7 @@ dependencies = [
     "alibabacloud-maxcompute20220104>=2.3.0",
     "pandas>=2.2.2",
     "openpyxl>=3.1.5",
+    "rich>=13.7.1",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"

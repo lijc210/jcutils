@@ -239,8 +239,6 @@ googleapis-common-protos==1.63.2
     # via opentelemetry-exporter-otlp-proto-http
 graphviz==0.20.3
     # via apache-airflow
-greenlet==3.0.3
-    # via playwright
 grpcio==1.65.1
     # via opentelemetry-exporter-otlp-proto-grpc
 gunicorn==22.0.0
@@ -296,8 +294,6 @@ ldap3==2.9.1
     # via jcutils
 limits==3.13.0
     # via flask-limiter
-line-profiler==4.0.3
-    # via jcutils
 linkify-it-py==2.0.3
     # via apache-airflow
 lockfile==0.12.2
@@ -339,9 +335,9 @@ multidict==6.0.5
     # via aiohttp
     # via yarl
 numpy==1.26.4
+    # via jcutils
     # via pandas
     # via pyarrow
-    # via jcutils
 openpyxl==3.1.5
     # via jcutils
 opentelemetry-api==1.15.0
@@ -378,10 +374,6 @@ pathspec==0.12.1
     # via apache-airflow
 pendulum==3.0.0
     # via apache-airflow
-pip==24.1.2
-    # via jcutils
-playwright==1.41.2
-    # via jcutils
 pluggy==1.5.0
     # via apache-airflow
 ply==3.11
@@ -395,8 +387,6 @@ pss==1.45
     # via airflow-code-editor
 psutil==6.0.0
     # via apache-airflow
-psycopg2-binary==2.9.5
-    # via jcutils
 pure-sasl==0.6.2
     # via easybase
 py==1.11.0
@@ -413,8 +403,6 @@ pycryptodome==3.20.0
 pydantic==1.10.17
     # via apache-airflow
     # via fastapi
-pyee==11.0.1
-    # via playwright
 pygments==2.18.0
     # via apache-airflow
     # via rich
@@ -423,8 +411,6 @@ pyjwt==2.8.0
     # via flask-appbuilder
     # via flask-jwt-extended
 pykafka==2.8.0
-    # via jcutils
-pymssql==2.2.7
     # via jcutils
 pymysql==1.0.2
     # via jcutils
@@ -438,9 +424,9 @@ python-dateutil==2.8.2
     # via apache-airflow
     # via croniter
     # via flask-appbuilder
+    # via jcutils
     # via pandas
     # via pendulum
-    # via jcutils
     # via time-machine
 python-multipart==0.0.5
     # via jcutils
@@ -472,9 +458,9 @@ requests==2.26.0
     # via alibabacloud-tea
     # via apache-airflow-providers-http
     # via connexion
+    # via jcutils
     # via opentelemetry-exporter-otlp-proto-http
     # via pyodps
-    # via jcutils
     # via requests-toolbelt
 requests-toolbelt==1.0.0
     # via apache-airflow-providers-http
@@ -486,6 +472,7 @@ rfc3339-validator==0.1.4
 rich==13.7.1
     # via apache-airflow
     # via flask-limiter
+    # via jcutils
     # via rich-argparse
 rich-argparse==1.5.2
     # via apache-airflow
@@ -559,7 +546,6 @@ typing-extensions==4.12.2
     # via limits
     # via opentelemetry-sdk
     # via pydantic
-    # via pyee
 tzdata==2024.1
     # via pandas
     # via pendulum

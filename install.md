@@ -22,7 +22,7 @@ rye lint --fix
 # 格式化代码
 rye fmt
 # 打包(加-c 清除打包)
-rye build
+rye build -c
 # 发布
 rye publish
 # 添加本地包

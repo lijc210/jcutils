@@ -1,6 +1,9 @@
 # Created on: 2021/3/11 11:11
 # Email: lijicong@163.com
 # desc
+import base64
+import hashlib
+
 import requests
 from retry import retry
 
@@ -127,11 +130,28 @@ if __name__ == "__main__":
     # content = """
     # 你好，这是一条测试消息
     # """
-    # send_text("d94aa6fc-1ee7-4515-xxxx-54aec79a2a68", content, ["@all"])
-    content = """
-        实时新增用户反馈<font color=\"warning\">132例</font>，请相关同事注意。\n
-         >类型:<font color=\"comment\">用户反馈</font>
-         >普通用户反馈:<font color=\"comment\">117例</font>
-         >VIP用户反馈:<font color=\"comment\">15例</font>
-    """
-    send_markdown("d94aa6fc-1ee7-4515-8704-54aec79a2a68", content, ["@all"])
+    # send_text("d94aa6fc-1ee7-4515-8704-54aec79a2a68", content, ["@all"])
+
+    # 发送markdow
+    # content = """
+    #     实时新增用户反馈<font color=\"warning\">132例</font>，请相关同事注意。\n
+    #      >类型:<font color=\"comment\">用户反馈</font>
+    #      >普通用户反馈:<font color=\"comment\">117例</font>
+    #      >VIP用户反馈:<font color=\"comment\">15例</font>
+    # """
+    # send_markdown("d94aa6fc-1ee7-4515-8704-54aec79a2a68", content, ["@all"])
+
+    # 发送图片
+    file_path = "data/test.png"
+    with open(file_path, "rb") as file:
+        data = file.read()
+        # 转换图片成base64格式
+        encodestr = base64.b64encode(data)
+        base64_data = str(encodestr, "utf-8")
+
+        # 计算图片的MD5值
+        md = hashlib.md5()
+        md.update(data)
+        md5 = md.hexdigest()
+
+    send_img("d94aa6fc-1ee7-4515-8704-54aec79a2a68", md5, base64_data)
