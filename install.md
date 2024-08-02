@@ -21,24 +21,26 @@ rye lint
 rye lint --fix
 # 格式化代码
 rye fmt
-# 打包(加-c 清除打包)
-rye build -c
-# 发布
-rye publish
-# 添加本地包
-rye add jcutils --path jcutils-0.1.0-py3-none-any.whl
+# 启动
+python main.py
+# rye启动
+rye run main
+# 执行脚本
+source .env
+python ...
+# 后台运行
+nohup rye run main >> /data/appdata/guoquan-apocalypse-cron/logs/app.log 2>&1 &
 ```
 
 ## docker方式部署命令参考
 
 ```shell
-docker build -f Dockerfile -t guoquan-apocalypse-app .
-docker run -d -p 15603:15603 -e ENV=dev --name guoquan-apocalypse-app guoquan-apocalypse-app
-docker run -d -p 15603:15603 -e ENV=test --name guoquan-apocalypse-app guoquan-apocalypse-app
-docker run -d -p 15603:15603 -e ENV=prod --name guoquan-apocalypse-app guoquan-apocalypse-app
+# 尽量在linux下 build，避免架构不一致
+
+docker build -f Dockerfile -t guoquan-apocalypse-cron .
+docker run -d -p 15603:15603 -e ENV=dev --name guoquan-apocalypse-cron guoquan-apocalypse-cron
+docker run -d -p 15603:15603 -e ENV=test --name guoquan-apocalypse-cron guoquan-apocalypse-cron
+docker run -d -p 15603:15603 -e ENV=prod --name guoquan-apocalypse-cron guoquan-apocalypse-cron
 ```
 
 
-## 推送到 github
-
-git remote set-url --add origin https://github.com/lijc210/jcutils
