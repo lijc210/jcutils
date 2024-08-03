@@ -9,7 +9,7 @@
 from tabulate import tabulate
 
 
-def table_to_markdown(data, headers="firstrow", tablefmt="pipe", showindex=False):
+def table_to_markdown(data, headers=(), tablefmt="simple_outline", showindex=False):
     """
     https://github.com/astanin/python-tabulate
     将数据转换为 Markdown 格式的表格。
@@ -43,6 +43,6 @@ if __name__ == "__main__":
     ]
 
     # 生成 Markdown 表格
-    markdown_table = table_to_markdown(data)
+    markdown_table = table_to_markdown(data, tablefmt="simple_outline")
 
     print(markdown_table)
