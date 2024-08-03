@@ -78,3 +78,11 @@ allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/jcutils"]
+
+[[tool.rye.sources]]
+name = "aliyun"
+url = "https://mirrors.aliyun.com/pypi/simple"
+
+
+[tool.uv.pip]
+index-url = "https://test.pypi.org/simple"
