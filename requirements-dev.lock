@@ -239,6 +239,8 @@ googleapis-common-protos==1.63.2
     # via opentelemetry-exporter-otlp-proto-http
 graphviz==0.20.3
     # via apache-airflow
+greenlet==3.0.3
+    # via sqlalchemy
 grpcio==1.65.1
     # via opentelemetry-exporter-otlp-proto-grpc
 gunicorn==22.0.0
