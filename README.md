@@ -117,8 +117,8 @@ print(result)
 ```python
 from jcutils.client import QyWeixinBot
 
-bot = QyWeixinBot(key="YOUR_WEBHOOK_KEY")
-bot.send_text("Alert: 服务器CPU负载超过90%")
+bot = QyWeixinBot()
+bot.send_text("Alert: 服务器CPU负载超过90%",key="YOUR_WEBHOOK_KEY")
 ```
 
 ### 性能监控
