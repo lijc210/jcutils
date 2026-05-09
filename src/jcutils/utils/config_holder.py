@@ -3,13 +3,13 @@ import os
 
 from src.jcutils.utils.nacos_client import NacosClient
 
-from .config_loader import _merge_with_env, load_config
+from .config_loader import ConfigLoader
 
-nacos_config = load_config()
+nacos_config = ConfigLoader.load_config()
 
 
 async def config_listener(tenant, data_id, group, content):
-    config_dict = _merge_with_env(nacos_config)
+    config_dict = ConfigLoader._merge_with_env(nacos_config)
     print(f"配置已更新: tenant={tenant}, data_id={data_id}, group={group}")
 
 

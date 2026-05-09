@@ -18,4 +18,4 @@ class AppConfig(BaseModel):
     POSTGRES_TEST_PASSWD: str = 'passwd'
     POSTGRES_TEST_PORT: int = 5432
     POSTGRES_TEST_USER: str = 'user'
-    TEST: str = 'test1'
+    TEST: str = 'test2'
