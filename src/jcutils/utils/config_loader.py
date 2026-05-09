@@ -197,18 +197,8 @@ class ConfigLoader:
             cls._config_dict = cls.load_config()
         return cls._config_dict
 
-    @classmethod
-    def get_app_config(cls):
-        """获取 AppConfig 实例"""
-        if cls._app_config is None:
-            from schema import AppConfig  # noqa: E402  # type: ignore
-
-            cls._app_config = AppConfig.model_validate(cls.get_config_dict())
-        return cls._app_config
-
 
 # 向后兼容：模块级变量
-config_dict = ConfigLoader.get_config_dict()
 if TYPE_CHECKING:
     from schema import AppConfig  # IDE 和类型检查器能识别 # noqa: E402  # type: ignore
 else:
@@ -218,4 +208,4 @@ else:
         from pydantic import BaseModel as AppConfig
 
 
-app_config: AppConfig = ConfigLoader.get_app_config()
+app_config: AppConfig = AppConfig.model_validate(ConfigLoader.get_config_dict())
