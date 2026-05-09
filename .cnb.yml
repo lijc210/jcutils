@@ -13,3 +13,4 @@ main:
             username: ${GITHUB_USER}
             password: ${GITHUB_TOKEN}
             sync_mode: mirror
+            force: true
