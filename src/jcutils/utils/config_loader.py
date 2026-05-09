@@ -31,7 +31,7 @@ class ConfigLoader:
     @classmethod
     def _load_from_nacos(cls) -> dict:
         """从 Nacos 拉取配置，合并环境变量（环境变量优先级更高）"""
-        from src.jcutils.utils.nacos_client import NacosClient
+        from ..utils.nacos_client import NacosClient
 
         NACOS_SERVER = os.getenv("NACOS_SERVER", default="")
         NACOS_NAMESPACE = os.getenv("NACOS_NAMESPACE", default="")
