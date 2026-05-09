@@ -1,0 +1,13 @@
+{
+    "include": ["src", "tests", "scripts"],
+    "exclude": [
+        "**/__pycache__",
+        "**/.pytest_cache",
+        "**/venv",
+        "**/.venv",
+        "**/node_modules",
+        "**/build",
+        "**/dist"
+    ],
+    "typeCheckingMode": "standard"
+}

@@ -1,0 +1,23 @@
+[
+    {
+        "label": "Run Python In jcutils", // 任务显示名称，在命令面板中看到的标签
+        "command": ".venv/bin/python ${ZED_FILE}", // 执行的命令：使用项目虚拟环境中的Python解释器运行当前文件
+        "args": [], // 额外参数数组，这里为空表示不需要额外参数
+        "cwd": "${ZED_WORKTREE_ROOT}/jcutils",
+        "env": {
+            // 环境变量设置
+            "PYTHONPATH": ".", // 设置Python路径为项目根目录，确保能正确导入模块
+            "CONFIG_SOURCE": "nacos", // nacos apollo local
+            "NACOS_NAMESPACE": "dev",
+            "NACOS_DATA_ID": "jcutils.env",
+            "NACOS_GROUP": "jcutils", //
+        },
+        "use_new_terminal": false, // 不在新终端中运行，而是在现有终端面板中执行
+        "allow_concurrent_runs": false, // 禁止并发运行，防止同一个任务同时运行多个实例
+        "reveal": "always", // 总是显示任务输出面板（无论是否有输出）
+        "hide": "never", // 从不自动隐藏任务输出面板
+        "shell": "system", // 使用系统默认shell来执行命令
+        "show_summary": true, // 在任务完成后显示执行结果摘要
+        "show_command": true, // 在执行时显示具体的命令内容，便于调试
+    },
+]

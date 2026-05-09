@@ -1,0 +1,15 @@
+main:
+  push:
+    - imports:
+        # 引用密钥仓库中的特定文件
+        - https://cnb.cool/lijc210/secret/-/blob/main/env.prod.yml
+      stages:
+        - name: 同步到github
+          image: tencentcom/git-sync
+          env:
+          settings:
+            target_url: https://github.com/lijc210/jcutils.git
+            auth_type: https
+            username: ${GITHUB_USER}
+            password: ${GITHUB_TOKEN}
+            sync_mode: mirror
