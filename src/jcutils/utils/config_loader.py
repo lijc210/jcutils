@@ -52,7 +52,8 @@ class ConfigLoader:
                 "使用 Nacos 时必须配置 NACOS_SERVER、NACOS_NAMESPACE、NACOS_GROUP、NACOS_DATA_ID、NACOS_USERNAME 和 NACOS_PASSWORD"
             )
 
-        print(f"[config] 从 Nacos 加载配置: {NACOS_SERVER}，NACOS_DATA_ID: {NACOS_DATA_ID}")
+        print(f"[config] 从 Nacos 加载配置: {NACOS_SERVER}")
+        print(f"[config] NACOS_NAMESPACE: {NACOS_NAMESPACE}，NACOS_DATA_ID: {NACOS_DATA_ID}")
 
         nacos_client = NacosClient(
             server=NACOS_SERVER, namespace=NACOS_NAMESPACE, username=NACOS_USERNAME, password=NACOS_PASSWORD
