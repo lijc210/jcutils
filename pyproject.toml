@@ -151,14 +151,13 @@ url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 default = true
 
 [[tool.uv.index]]
-name = "pypi"
-url = "https://pypi.org/simple"
-# default = true
+# url = "https://pypi.org/simple"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
 
 [tool.uv.pip]
+# index-url = "https://pypi.org/simple"
 index-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-# index-url = "https://mirrors.aliyun.com/pypi/simple"
-
 
 [tool.maturin]
 module-name = "jcutils._core"
