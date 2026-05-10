@@ -9,8 +9,11 @@ MySQL 异步连接池客户端，内部使用 async with 上下文管理器自�
 
 from typing import Any, AsyncGenerator, Dict, List, Optional, Sequence, Tuple, Union
 
-import aiomysql
-from aiomysql import Pool
+try:
+    import aiomysql
+    from aiomysql import Pool
+except ImportError:
+    raise ImportError('请先安装：pip install jcutils[mysql] or uv add "jcutils[mysql]"')
 
 
 class AsyncMySQLClient:
