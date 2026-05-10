@@ -7,49 +7,51 @@ Presto (Trino) 连接客户端，内部使用 with 上下文管理器自动管�
 支持普通查询和流式查询
 """
 
-from typing import Any, Dict, Generator, List, Optional, Protocol, Sequence, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Sequence, Tuple, Union
 
 from pyhive import presto
-
-
-class ConnectionConfig(Protocol):
-    """连接配置协议接口（所有属性均为可选）"""
-
-    host: Optional[str]
-    port: Optional[int]
-    username: Optional[str]
-    password: Optional[str]
-    catalog: Optional[str]
-    schema: Optional[str]
-    protocol: Optional[str]
-    source: Optional[str]
-    session_properties: Optional[Dict[str, Any]]
 
 
 class PrestoClient:
     def __init__(
         self,
-        conn_config: ConnectionConfig,
+        host: str = "localhost",
+        port: int = 8080,
+        username: str = "default",
+        password: Optional[str] = None,
+        catalog: Optional[str] = None,
+        schema: Optional[str] = None,
+        protocol: str = "http",
+        source: Optional[str] = None,
+        session_properties: Optional[Dict[str, Any]] = None,
         cursorclass: str = "tuple",
     ) -> None:
         """
         Presto 连接客户端
 
-        :param conn_config: 连接配置对象（符合 ConnectionConfig 协议），包含 host, port, username, catalog, schema 等
+        :param host: 主机地址，默认 localhost
+        :param port: 端口号，默认 8080
+        :param username: 用户名，默认 default
+        :param password: 密码
+        :param catalog: catalog 名称
+        :param schema: schema 名称
+        :param protocol: 协议，默认 http
+        :param source: 数据源名称
+        :param session_properties: 会话属性
         :param cursorclass: 游标类型，tuple/dict
         """
-        self.host = conn_config.host or "localhost"
-        self.port = conn_config.port or 8080
-        self.username = conn_config.username or "default"
-        self.catalog = conn_config.catalog
-        self.schema = conn_config.schema
+        self.host = host
+        self.port = port
+        self.username = username
+        self.catalog = catalog
+        self.schema = schema
         self.cursorclass = cursorclass
 
         # 其他可选连接参数
-        self.password = conn_config.password
-        self.protocol = conn_config.protocol or "http"
-        self.source = conn_config.source
-        self.session_properties = conn_config.session_properties
+        self.password = password
+        self.protocol = protocol
+        self.source = source
+        self.session_properties = session_properties
 
     def get_connection(self) -> Any:
         """
@@ -244,19 +246,14 @@ class PrestoClient:
 
 
 if __name__ == "__main__":
-    from types import SimpleNamespace
-
-    # 使用 SimpleNamespace 创建配置对象
-    presto_config = SimpleNamespace(
+    # 创建 Presto 客户端（默认使用 tuple 游标）
+    presto_client = PrestoClient(
         host="10.10.23.11",
         port=8444,
         username="lijicong",
         catalog="hive",
         schema="dw",
-    )  # type: ignore[assignment]
-
-    # 创建 Presto 客户端（默认使用 tuple 游标）
-    presto_client = PrestoClient(conn_config=presto_config)  # type: ignore[arg-type]
+    )
 
     # 查询单条记录（tuple 格式）
     sql = "SELECT * FROM dw.ol_cms_display_amount LIMIT 1"
@@ -264,7 +261,14 @@ if __name__ == "__main__":
     print("fetchone:", result)
 
     # 使用 dict 游标类型
-    presto_client_dict = PrestoClient(conn_config=presto_config, cursorclass="dict")  # type: ignore[arg-type]
+    presto_client_dict = PrestoClient(
+        host="10.10.23.11",
+        port=8444,
+        username="lijicong",
+        catalog="hive",
+        schema="dw",
+        cursorclass="dict",
+    )
 
     # 查询单条记录（dict 格式）
     result = presto_client_dict.fetchone(sql)

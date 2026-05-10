@@ -7,26 +7,23 @@ ClickHouse 连接客户端，内部使用 with 上下文管理器自动管理连
 支持普通查询和流式查询
 """
 
-from typing import Any, Dict, Generator, Optional, Protocol, Sequence, Tuple, Union
+from typing import Any, Dict, Generator, Optional, Sequence, Tuple, Union
 
-from clickhouse_driver import connect
-from clickhouse_driver.dbapi.extras import DictCursor
-
-
-class ConnectionConfig(Protocol):
-    """连接配置协议接口"""
-
-    host: str
-    user: str
-    passwd: str
-    db: str
-    port: int
+try:
+    from clickhouse_driver import connect  # type: ignore
+    from clickhouse_driver.dbapi.extras import DictCursor  # type: ignore
+except ImportError:
+    raise ImportError("请先安装：pip install jcutils[clickhouse]")
 
 
 class ClickhouseClient:
     def __init__(
         self,
-        conn_config: ConnectionConfig,
+        host: str = "",
+        user: str = "",
+        passwd: str = "",
+        db: str = "",
+        port: int = 9000,
         charset: str = "utf8",
         cursorclass: str = "dict",
         max_execution_time: int = 420,
@@ -34,17 +31,21 @@ class ClickhouseClient:
         """
         ClickHouse 连接客户端
 
-        :param conn_config: 连接配置对象（符合 ConnectionConfig 协议），包含 host, user, passwd, db, port
+        :param host: 主机地址
+        :param user: 用户名
+        :param passwd: 密码
+        :param db: 数据库名
+        :param port: 端口号，默认 9000
         :param charset: 字符集，默认 utf8
         :param cursorclass: 游标类型，dict/普通
         :param max_execution_time: 最大执行时间（秒）
         """
-        self.host = conn_config.host
-        self.user = conn_config.user
-        self.passwd = conn_config.passwd
-        self.db = conn_config.db
+        self.host = host
+        self.user = user
+        self.passwd = passwd
+        self.db = db
         self.charset = charset
-        self.port = conn_config.port
+        self.port = port
         self.cursorclass = cursorclass
         self.max_execution_time = max_execution_time
 
@@ -196,24 +197,14 @@ class ClickhouseClient:
 
 
 if __name__ == "__main__":
-    from pydantic import BaseModel
-
-    class TestConnectionConfig(BaseModel):
-        host: str
-        user: str
-        passwd: str
-        db: str
-        port: int
-
-    ck_config = TestConnectionConfig(
+    # 创建连接池客户端
+    ck_client = ClickhouseClient(
         host="127.0.0.1",
         user="default",
         passwd="",
         db="default",
         port=9000,
     )
-
-    ck_client = ClickhouseClient(conn_config=ck_config)
 
     # 查询单条记录
     sql = "SELECT * FROM system.tables LIMIT 1"

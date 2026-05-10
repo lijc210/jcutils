@@ -7,26 +7,20 @@ MySQL 异步连接池客户端，内部使用 async with 上下文管理器自�
 支持普通查询和流式查询两种独立的连接池
 """
 
-from typing import Any, AsyncGenerator, Dict, List, Optional, Protocol, Sequence, Tuple, Union
+from typing import Any, AsyncGenerator, Dict, List, Optional, Sequence, Tuple, Union
 
 import aiomysql
 from aiomysql import Pool
 
 
-class ConnectionConfig(Protocol):
-    """连接配置协议接口"""
-
-    host: str
-    user: str
-    passwd: str
-    db: str
-    port: int
-
-
 class AsyncMySQLClient:
     def __init__(
         self,
-        conn_config: ConnectionConfig,
+        host: str = "",
+        user: str = "",
+        passwd: str = "",
+        db: str = "",
+        port: int = 3306,
         charset: str = "utf8mb4",
         cursorclass: str = "dict",
         mincached: int = 2,
@@ -38,7 +32,11 @@ class AsyncMySQLClient:
         """
         MySQL 异步连接池客户端
 
-        :param conn_config: 连接配置对象（符合 ConnectionConfig 协议），包含 host, user, passwd, db, port
+        :param host: 主机地址
+        :param user: 用户名
+        :param passwd: 密码
+        :param db: 数据库名
+        :param port: 端口号，默认 3306
         :param charset: 字符集，默认 utf8mb4
         :param cursorclass: 游标类型，dict/ss_dict/ss_list/普通
         :param mincached: 普通连接池初始空闲连接数
@@ -47,12 +45,12 @@ class AsyncMySQLClient:
         :param blocking: 连接池满时是否阻塞等待
         :param echo: 是否输出 SQL 日志
         """
-        self.host = conn_config.host
-        self.user = conn_config.user
-        self.passwd = conn_config.passwd
-        self.db = conn_config.db
+        self.host = host
+        self.user = user
+        self.passwd = passwd
+        self.db = db
         self.charset = charset
-        self.port = conn_config.port
+        self.port = port
         self.cursorclass = cursorclass
         self.echo = echo
 
@@ -322,26 +320,16 @@ class AsyncMySQLClient:
 
 # 运行示例
 if __name__ == "__main__":
-    from pydantic import BaseModel
-
-    class TestConnectionConfig(BaseModel):
-        host: str
-        user: str
-        passwd: str
-        db: str
-        port: int
-
-    mysql_config = TestConnectionConfig(
-        host="10.10.11.244",
-        user="biuser",
-        passwd="@biuser123",
-        db="userdata",
-        port=3309,
-    )
 
     async def main():
         # 创建连接池客户端
-        mysql_client = AsyncMySQLClient(conn_config=mysql_config)
+        mysql_client = AsyncMySQLClient(
+            host="10.10.11.244",
+            user="biuser",
+            passwd="@biuser123",
+            db="userdata",
+            port=3309,
+        )
 
         try:
             # 查询单条记录

@@ -8,27 +8,21 @@ Desc: PostgreSQL 异步连接池客户端，内部使用 async with 上下文管
 """
 
 import logging
-from typing import Any, AsyncGenerator, Dict, List, Optional, Protocol, Sequence, Tuple, Union
+from typing import Any, AsyncGenerator, Dict, List, Optional, Sequence, Tuple, Union
 
 import asyncpg
 
 logger = logging.getLogger(__name__)
 
 
-class ConnectionConfig(Protocol):
-    """连接配置协议接口"""
-
-    host: str
-    user: str
-    passwd: str
-    db: str
-    port: int
-
-
 class AsyncPostgresClient:
     def __init__(
         self,
-        conn_config: ConnectionConfig,
+        host: str = "",
+        user: str = "",
+        passwd: str = "",
+        db: str = "",
+        port: int = 5432,
         min_size: int = 2,
         max_size: int = 10,
         command_timeout: float = 30.0,
@@ -38,18 +32,22 @@ class AsyncPostgresClient:
         """
         PostgreSQL 异步连接池客户端（使用 asyncpg 内置连接池）
 
-        :param conn_config: 连接配置对象（符合 ConnectionConfig 协议），包含 host, user, passwd, db, port
+        :param host: 主机地址
+        :param user: 用户名
+        :param passwd: 密码
+        :param db: 数据库名
+        :param port: 端口号，默认 5432
         :param min_size: 普通连接池最小连接数
         :param max_size: 普通连接池最大连接数
         :param command_timeout: 命令超时时间（秒）
         :param max_queries: 单个连接最大查询数
         :param max_inactive_connection_lifetime: 连接最大空闲时间（秒）
         """
-        self.host = conn_config.host
-        self.user = conn_config.user
-        self.password = conn_config.passwd
-        self.dbname = conn_config.db
-        self.port = conn_config.port
+        self.host = host
+        self.user = user
+        self.password = passwd
+        self.dbname = db
+        self.port = port
 
         # 普通连接池配置参数
         self.min_size = min_size
@@ -385,26 +383,14 @@ class AsyncPostgresClient:
 if __name__ == "__main__":
 
     async def main():
-        # 示例配置
-        from pydantic import BaseModel
-
-        class TestConnectionConfig(BaseModel):
-            host: str
-            user: str
-            passwd: str
-            db: str
-            port: int
-
-        conn_config = TestConnectionConfig(
+        # 创建连接池客户端
+        pg_client = AsyncPostgresClient(
             host="10.230.141.173",
             user="form_reader",
             passwd="xxxxxxxxxxxx",
             db="data",
             port=5432,
         )
-
-        # 创建连接池客户端
-        pg_client = AsyncPostgresClient(conn_config)
 
         try:
             # 查询单条记录

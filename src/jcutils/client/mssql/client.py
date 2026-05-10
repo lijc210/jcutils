@@ -7,25 +7,22 @@ Microsoft SQL Server 连接客户端，内部使用 with 上下文管理器自�
 支持普通查询和流式查询
 """
 
-from typing import Any, Dict, Generator, List, Optional, Protocol, Sequence, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Sequence, Tuple, Union
 
-import pymssql
-
-
-class ConnectionConfig(Protocol):
-    """连接配置协议接口"""
-
-    host: str
-    user: str
-    passwd: str
-    db: str
-    port: int
+try:
+    import pymssql  # type: ignore
+except ImportError:
+    raise ImportError("请先安装：pip install jcutils[pymssql]")
 
 
 class MsSqlClient:
     def __init__(
         self,
-        conn_config: ConnectionConfig,
+        host: str = "",
+        user: str = "",
+        passwd: str = "",
+        db: str = "",
+        port: int = 1433,
         charset: str = "utf8",
         cursorclass: str = "dict",
         autocommit: bool = True,
@@ -34,18 +31,22 @@ class MsSqlClient:
         """
         SQL Server 连接客户端
 
-        :param conn_config: 连接配置对象（符合 ConnectionConfig 协议），包含 host, user, passwd, db, port
+        :param host: 主机地址
+        :param user: 用户名
+        :param passwd: 密码
+        :param db: 数据库名
+        :param port: 端口号，默认 1433
         :param charset: 字符集，默认 utf8
         :param cursorclass: 游标类型，dict/普通
         :param autocommit: 是否自动提交，默认 True
         :param timeout: 查询超时时间（秒）
         """
-        self.host = conn_config.host
-        self.user = conn_config.user
-        self.passwd = conn_config.passwd
-        self.db = conn_config.db
+        self.host = host
+        self.user = user
+        self.passwd = passwd
+        self.db = db
+        self.port = port
         self.charset = charset
-        self.port = conn_config.port
         self.cursorclass = cursorclass
         self.autocommit = autocommit
         self.timeout = timeout
@@ -240,24 +241,13 @@ class MsSqlClient:
 
 
 if __name__ == "__main__":
-    from pydantic import BaseModel
-
-    class TestConnectionConfig(BaseModel):
-        host: str
-        user: str
-        passwd: str
-        db: str
-        port: int
-
-    mssql_config = TestConnectionConfig(
+    mssql_client = MsSqlClient(
         host="xx.xx.xx.xx",
         user="xxxxx",
         passwd="your_password",
         db="AIS20201114183546",
         port=1433,
     )
-
-    mssql_client = MsSqlClient(conn_config=mssql_config)
 
     # 查询单条记录
     sql = "SELECT TOP 1 * FROM dbo.table_name"

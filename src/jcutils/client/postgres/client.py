@@ -7,27 +7,20 @@ Desc: PostgreSQL 连接池客户端，内部使用 with 上下文管理器自动
 使用 psycopg3 (psycopg) 内置连接池
 """
 
-from typing import Any, Dict, Generator, Optional, Protocol, Sequence, Tuple, Union
+from typing import Any, Dict, Generator, Optional, Sequence, Tuple, Union
 
 from psycopg.rows import dict_row, tuple_row
 from psycopg_pool import ConnectionPool
-from pydantic import BaseModel
-
-
-class ConnectionConfig(Protocol):
-    """连接配置协议接口"""
-
-    host: str
-    user: str
-    passwd: str
-    db: str
-    port: int
 
 
 class PostgresClient:
     def __init__(
         self,
-        conn_config: ConnectionConfig,
+        host: str = "",
+        user: str = "",
+        passwd: str = "",
+        db: str = "",
+        port: int = 5432,
         cursor_factory: str = "dict",
         min_size: int = 2,
         max_size: int = 10,
@@ -38,7 +31,11 @@ class PostgresClient:
         """
         PostgreSQL 连接池客户端（使用 psycopg3 内置连接池）
 
-        :param conn_config: 连接配置对象（符合 ConnectionConfig 协议），包含 host, user, passwd, db, port
+        :param host: 主机地址
+        :param user: 用户名
+        :param passwd: 密码
+        :param db: 数据库名
+        :param port: 端口号，默认 5432
         :param cursor_factory: 游标类型，dict/普通
         :param min_size: 普通连接池最小连接数
         :param max_size: 普通连接池最大连接数
@@ -46,11 +43,11 @@ class PostgresClient:
         :param max_lifetime: 连接最大生命周期（秒）
         :param num_workers: 连接池工作线程数
         """
-        self.host = conn_config.host
-        self.user = conn_config.user
-        self.password = conn_config.passwd
-        self.dbname = conn_config.db
-        self.port = conn_config.port
+        self.host = host
+        self.user = user
+        self.password = passwd
+        self.dbname = db
+        self.port = port
         self.cursor_factory = cursor_factory
 
         # 普通连接池配置参数
@@ -313,23 +310,14 @@ class PostgresClient:
 
 
 if __name__ == "__main__":
-    from pydantic import BaseModel
-
-    class TestConnectionConfig(BaseModel):
-        host: str
-        user: str
-        passwd: str
-        db: str
-        port: int
-
-    conn_config = TestConnectionConfig(
+    pg_client = PostgresClient(
         host="10.230.141.173",
         user="form_reader",
         passwd="xxxxxxxxxxxx",
         db="data",
         port=5432,
+        cursor_factory="dict",
     )
-    pg_client = PostgresClient(conn_config, cursor_factory="dict")
 
     # 查询单条记录
     sql = "select ip_num,city from config.xxxxx limit 1"

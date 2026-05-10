@@ -7,24 +7,21 @@ SQL Server ODBC 连接客户端，内部使用 with 上下文管理器自动管�
 支持普通查询和流式查询
 """
 
-from typing import Any, Dict, Generator, List, Optional, Protocol, Sequence, Tuple, Union
+from typing import Any, Dict, Generator, List, Optional, Sequence, Tuple, Union
 
-import pyodbc
-
-
-class ConnectionConfig(Protocol):
-    """连接配置协议接口"""
-
-    server: str
-    database: str
-    username: str
-    password: str
+try:
+    import pyodbc  # type: ignore
+except ImportError:
+    raise ImportError("请先安装：pip install jcutils[odbc]")
 
 
 class PyodbcClient:
     def __init__(
         self,
-        conn_config: ConnectionConfig,
+        server: str = "",
+        database: str = "",
+        username: str = "",
+        password: str = "",
         driver: str = "ODBC Driver 17 for SQL Server",
         autocommit: bool = True,
         timeout: Optional[int] = None,
@@ -32,15 +29,18 @@ class PyodbcClient:
         """
         SQL Server ODBC 连接客户端
 
-        :param conn_config: 连接配置对象（符合 ConnectionConfig 协议），包含 server, database, username, password
+        :param server: 服务器地址
+        :param database: 数据库名
+        :param username: 用户名
+        :param password: 密码
         :param driver: ODBC 驱动名称，默认 "ODBC Driver 17 for SQL Server"
         :param autocommit: 是否自动提交，默认 True
         :param timeout: 查询超时时间（秒）
         """
-        self.server = conn_config.server
-        self.database = conn_config.database
-        self.username = conn_config.username
-        self.password = conn_config.password
+        self.server = server
+        self.database = database
+        self.username = username
+        self.password = password
         self.driver = driver
         self.autocommit = autocommit
         self.timeout = timeout
@@ -229,23 +229,13 @@ class PyodbcClient:
 
 
 if __name__ == "__main__":
-    from pydantic import BaseModel
-
-    class TestConnectionConfig(BaseModel):
-        server: str
-        database: str
-        username: str
-        password: str
-
-    sqlserver_config = TestConnectionConfig(
+    # 创建 SQL Server 客户端
+    client = PyodbcClient(
         server="47.94.219.54",
         database="AIS20201114183546",
         username="BIRead",
         password="your_password",
     )
-
-    # 创建 SQL Server 客户端
-    client = PyodbcClient(conn_config=sqlserver_config)
 
     # 查询单条记录
     sql = "SELECT TOP 1 * FROM dbo.T_SAL_OUTSTOCK"
