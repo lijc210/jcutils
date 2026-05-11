@@ -153,16 +153,22 @@ managed = true
 allow-direct-references = true
 
 [[tool.uv.index]]
-name = "tsinghua"
-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+url = "https://pypi.org/simple"
 default = true
 
 [[tool.uv.index]]
-url = "https://pypi.org/simple"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 
 [tool.uv.pip]
 # index-url = "https://pypi.org/simple"
 index-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+
+[dependency-groups]
+dev = ["requests>=2.32.3"]
+
+[tool.uv]
+python-install-mirror = "https://ghfast.top/https://github.com/indygreg/python-build-standalone/releases/download"
+index-strategy = "unsafe-best-match" # uv 会在所有索引里找最高版本，而不是找到就停
 
 [tool.maturin]
 module-name = "jcutils._core"
