@@ -1,6 +1,6 @@
 [project]
 name = "jcutils"
-version = "0.5.6"
+version = "0.5.7"
 description = "python utils"
 authors = [{ name = "lijc210", email = "lijc210@163.com" }]
 readme = "README.md"
@@ -17,7 +17,7 @@ classifiers = [
 license = { text = "MIT License" }
 # 只放「所有项目都一定需要的最小依赖」
 dependencies = [
-    "python-dotenv>=1.2.2"
+    "python-dotenv>=1.0.1" # 支持python3.8的最高版本
 ]
 
 [project.optional-dependencies]
