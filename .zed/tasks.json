@@ -7,7 +7,7 @@
         "env": {
             // 环境变量设置
             "PYTHONPATH": ".", // 设置Python路径为项目根目录，确保能正确导入模块
-            "CONFIG_SOURCE": "nacos", // nacos apollo local
+            "CONFIG_SOURCE": "apollo", // nacos apollo local
             "NACOS_NAMESPACE": "dev",
             "NACOS_DATA_ID": "jcutils.env",
             "NACOS_GROUP": "jcutils", //

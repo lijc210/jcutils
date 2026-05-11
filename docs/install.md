@@ -26,3 +26,9 @@ uv self update
 uv python pin 3.11.1
 uv sync
 ```
+
+## 安装依赖
+
+```
+uv sync --all-extras
+```

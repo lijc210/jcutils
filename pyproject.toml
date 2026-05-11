@@ -1,10 +1,10 @@
 [project]
 name = "jcutils"
-version = "0.5.7"
+version = "0.5.8"
 description = "python utils"
 authors = [{ name = "lijc210", email = "lijc210@163.com" }]
 readme = "README.md"
-requires-python = ">= 3.8"
+requires-python = ">= 3.9"
 homepage = "https://github.com/lijic210/jcutils"
 repository = "https://github.com/lijic210/jcutils"
 documentation = "https://github.com/lijic210/jcutils"
@@ -15,9 +15,10 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 license = { text = "MIT License" }
-# 只放「所有项目都一定需要的最小依赖」
+
 dependencies = [
-    "python-dotenv>=1.0.1" # 支持python3.8的最高版本
+    "python-dotenv",
+    "pydantic"
 ]
 
 [project.optional-dependencies]
@@ -29,14 +30,14 @@ config = [
 
 # mysql相关
 mysql = [
-    "PyMySQL>=1.0.2",
+    "PyMySQL",
     "aiomysql>=0.2.0",
     "DBUtils>=3.0.2",
 ]
 
 # postgres相关
 postgresql = [
-    "psycopg[binary,pool]>=3.2.13",
+    "psycopg[pool]",
     "asyncpg>=0.30.0",
     "DBUtils>=3.0.2",
 ]
@@ -46,7 +47,7 @@ postgresql = [
 # brew install freetds
 # brew install openssl
 pymssql = [
-    "pymssql>=2.2.2",
+    "pymssql",
 ]
 
 # boto3

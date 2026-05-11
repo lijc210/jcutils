@@ -212,9 +212,7 @@ except ImportError:
     config_dict = ConfigLoader.get_config_dict()
 
     # 一行代码动态创建模型类
-    DynamicAppConfig = create_model(
-        "DynamicAppConfig", **{key: (type(value), ...) for key, value in config_dict.items()}
-    )
+    AppConfig = create_model("AppConfig", **{key: (type(value), ...) for key, value in config_dict.items()})
 
     # 实例化得到 BaseModel 对象
-    app_config = DynamicAppConfig(**config_dict)
+    app_config = AppConfig(**config_dict)
