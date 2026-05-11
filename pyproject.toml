@@ -1,6 +1,6 @@
 [project]
 name = "jcutils"
-version = "0.5.8"
+version = "0.5.9"
 description = "python utils"
 authors = [{ name = "lijc210", email = "lijc210@163.com" }]
 readme = "README.md"
@@ -132,7 +132,7 @@ utils = [
 
 # 包含所有可选依赖
 all = [
-    "jcutils[mysql,postgresql,pymssql,redis,kafka,clickhouse,alibabacloud,huaweicloud,sentry,data,elasticsearch,tools]",
+    "jcutils[config,mysql,postgresql,pymssql,redis,kafka,clickhouse,alibabacloud,huaweicloud,sentry,data,elasticsearch,utils]",
 ]
 
 [project.scripts]

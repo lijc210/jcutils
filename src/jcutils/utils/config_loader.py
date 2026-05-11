@@ -66,6 +66,10 @@ class ConfigLoader:
         if not nacos_config:
             raise Exception(f"Nacos 配置拉取失败: DATA_ID={NACOS_DATA_ID}, GROUP={NACOS_GROUP}")
 
+        # 注入额外信息
+        nacos_config["APP_ID"] = NACOS_DATA_ID
+        nacos_config["ENV"] = NACOS_NAMESPACE
+
         return cls._merge_with_env(nacos_config)
 
     @classmethod
@@ -86,6 +90,7 @@ class ConfigLoader:
             raise ValueError("使用 Apollo 时必须配置 APOLLO_APP_ID")
 
         print(f"[config] 从 Apollo 加载配置: {APOLLO_META_SERVER_ADDRESS}")
+        print(f"[config] APOLLO_APP_ID: {APOLLO_APP_ID}，APOLLO_ENV: {APOLLO_ENV}")
 
         client = ApolloClient(
             meta_server_address=APOLLO_META_SERVER_ADDRESS,
@@ -108,15 +113,23 @@ class ConfigLoader:
         if not apollo_config:
             raise Exception(f"Apollo 配置为空: APP_ID={APOLLO_APP_ID}, NAMESPACES={APOLLO_NAMESPACES}")
 
-        print(f"[config] Apollo 配置加载成功，共 {len(apollo_config)} 个配置项")
+        # 注入额外信息
+        apollo_config["APP_ID"] = APOLLO_APP_ID
+        apollo_config["ENV"] = APOLLO_ENV
+
         return cls._merge_with_env(apollo_config)
 
     @classmethod
     def _load_from_local(cls) -> dict:
         """从 .env 读取配置，合并环境变量"""
         print("[config] 从 .env 加载配置")
-        local = dict(dotenv_values(".env"))
-        return cls._merge_with_env(local)
+        ENV = os.getenv("ENV", default="dev").lower()
+        APP_ID = os.getenv("APP_ID", default="")
+        local_config = dict(dotenv_values(".env"))
+        # 注入额外信息
+        local_config["APP_ID"] = APP_ID
+        local_config["ENV"] = ENV
+        return cls._merge_with_env(local_config)
 
     @staticmethod
     def _infer_type(value: str) -> str:
