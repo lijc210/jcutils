@@ -139,17 +139,7 @@ class ConfigLoader:
             lines.append("    pass")
         for key, value in sorted(raw.items()):
             t = cls._infer_type(str(value))
-            if t == "bool":
-                # 将字符串"true"/"false"转换为Python布尔值
-                if str(value).lower() == "true":
-                    default = "True"
-                else:
-                    default = "False"
-            elif t == "str":
-                default = repr(value)
-            else:
-                default = value
-            lines.append(f"    {key}: {t} = {default}")
+            lines.append(f"    {key}: {t}")
         return "\n".join(lines)
 
     @classmethod
