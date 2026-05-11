@@ -11,6 +11,9 @@
             "NACOS_NAMESPACE": "dev",
             "NACOS_DATA_ID": "jcutils.env",
             "NACOS_GROUP": "jcutils", //
+            "APOLLO_META_SERVER_ADDRESS": "http://hwdev-apollo.xxxx.com:8080",
+            "APOLLO_APP_ID": "xxx-xuanji-business",
+            "APOLLO_ENV": "DEV",
         },
         "use_new_terminal": false, // 不在新终端中运行，而是在现有终端面板中执行
         "allow_concurrent_runs": false, // 禁止并发运行，防止同一个任务同时运行多个实例

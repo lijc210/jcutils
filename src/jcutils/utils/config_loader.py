@@ -6,7 +6,6 @@ pyapollo-zenkilan
 
 import asyncio
 import os
-from typing import TYPE_CHECKING
 
 from dotenv import dotenv_values, load_dotenv
 
@@ -34,7 +33,7 @@ class ConfigLoader:
         from ..utils.nacos_client import NacosClient
 
         NACOS_SERVER = os.getenv("NACOS_SERVER", default="")
-        NACOS_NAMESPACE = os.getenv("NACOS_NAMESPACE", default="")
+        NACOS_NAMESPACE = os.getenv("NACOS_NAMESPACE") or os.getenv("ENV", default="dev").lower()
         NACOS_GROUP = os.getenv("NACOS_GROUP", default="")
         NACOS_DATA_ID = os.getenv("NACOS_DATA_ID", default="")
         NACOS_USERNAME = os.getenv("NACOS_USERNAME", default="")
@@ -73,10 +72,13 @@ class ConfigLoader:
     def _load_from_apollo(cls) -> dict:
         """从 Apollo 拉取所有命名空间配置，合并环境变量（环境变量优先级更高）"""
         from pyapollo.client import ApolloClient  # type: ignore
-        from pyapollo.settings import ApolloSettingsConfig  # type: ignore
 
-        APOLLO_META_SERVER_ADDRESS = os.getenv("APOLLO_META_SERVER_ADDRESS")
-        APOLLO_APP_ID = os.getenv("APOLLO_APP_ID")
+        APOLLO_META_SERVER_ADDRESS = os.getenv("APOLLO_META_SERVER_ADDRESS", default="")
+        APOLLO_APP_ID = os.getenv("APOLLO_APP_ID", default="")
+        APOLLO_APP_SECRET = os.getenv("APOLLO_APP_SECRET", default="")
+        APOLLO_CLUSTER = os.getenv("APOLLO_CLUSTER", default="default")
+        APOLLO_ENV = os.getenv("APOLLO_ENV") or os.getenv("ENV", "DEV")
+        APOLLO_NAMESPACES = os.getenv("APOLLO_NAMESPACES", "application").split(",")
 
         if not APOLLO_META_SERVER_ADDRESS:
             raise ValueError("APOLLO_META_SERVER_ADDRESS 未配置")
@@ -85,26 +87,26 @@ class ConfigLoader:
 
         print(f"[config] 从 Apollo 加载配置: {APOLLO_META_SERVER_ADDRESS}")
 
-        settings = ApolloSettingsConfig(
+        client = ApolloClient(
             meta_server_address=APOLLO_META_SERVER_ADDRESS,
             app_id=APOLLO_APP_ID,
-            using_app_secret=os.getenv("APOLLO_USING_APP_SECRET", "false").lower() == "true",
-            app_secret=os.getenv("APOLLO_APP_SECRET", ""),
-            cluster=os.getenv("APOLLO_CLUSTER", "default"),
-            env=os.getenv("APOLLO_ENV", "DEV"),
-            namespaces=os.getenv("APOLLO_NAMESPACES", "application").split(","),
+            app_secret=APOLLO_APP_SECRET,
+            cluster=APOLLO_CLUSTER,
+            env=APOLLO_ENV,
+            namespaces=APOLLO_NAMESPACES,
         )
 
-        client = ApolloClient(settings=settings)
-
-        namespaces = settings.namespaces or ["application"]
         apollo_config = {}
-        for ns in namespaces:
+        for ns in APOLLO_NAMESPACES:
             ns_config = client._cache.get(ns.strip(), {})
-            apollo_config.update(ns_config)
+            for k, v in ns_config.items():
+                if isinstance(v, dict):
+                    apollo_config[k] = str(v)
+                else:
+                    apollo_config[k] = v
 
         if not apollo_config:
-            raise Exception(f"Apollo 配置为空: APP_ID={APOLLO_APP_ID}, NAMESPACES={namespaces}")
+            raise Exception(f"Apollo 配置为空: APP_ID={APOLLO_APP_ID}, NAMESPACES={APOLLO_NAMESPACES}")
 
         print(f"[config] Apollo 配置加载成功，共 {len(apollo_config)} 个配置项")
         return cls._merge_with_env(apollo_config)
@@ -125,7 +127,16 @@ class ConfigLoader:
             return "int"
         except ValueError:
             pass
+        try:
+            float(value)
+            return "float"
+        except ValueError:
+            pass
         return "str"
+
+    @staticmethod
+    def _format_key(key: str) -> str:
+        return key.replace("-", "_").replace(".", "_").upper()
 
     @classmethod
     def _build_schema_content(cls, raw: dict) -> str:
@@ -138,8 +149,9 @@ class ConfigLoader:
         if not raw:
             lines.append("    pass")
         for key, value in sorted(raw.items()):
+            k = cls._format_key(key)
             t = cls._infer_type(str(value))
-            lines.append(f"    {key}: {t}")
+            lines.append(f"    {k}: {t}")
         return "\n".join(lines)
 
     @classmethod
@@ -189,14 +201,20 @@ class ConfigLoader:
         return cls._config_dict
 
 
-# 向后兼容：模块级变量
-if TYPE_CHECKING:
-    from schema import AppConfig  # IDE 和类型检查器能识别 # noqa: E402  # type: ignore
-else:
-    try:
-        from schema import AppConfig
-    except ImportError:
-        from pydantic import BaseModel as AppConfig
+try:
+    from schema import AppConfig
 
+    app_config: AppConfig = AppConfig.model_validate(ConfigLoader.get_config_dict())
+except ImportError:
+    # 文件不存在时动态创建
+    from pydantic import create_model
 
-app_config: AppConfig = AppConfig.model_validate(ConfigLoader.get_config_dict())
+    config_dict = ConfigLoader.get_config_dict()
+
+    # 一行代码动态创建模型类
+    DynamicAppConfig = create_model(
+        "DynamicAppConfig", **{key: (type(value), ...) for key, value in config_dict.items()}
+    )
+
+    # 实例化得到 BaseModel 对象
+    app_config = DynamicAppConfig(**config_dict)

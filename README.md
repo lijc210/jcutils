@@ -97,7 +97,26 @@
 ## 安装
 
 ```bash
+# 安装基础包
 pip install jcutils
+# 安装指定扩展
+pip install jcutils[config]
+pip install jcutils[mysql]
+pip install jcutils[postgresql]
+pip install jcutils[pymssql]
+pip install jcutils[boto3]
+pip install jcutils[redis]
+pip install jcutils[kafka]
+pip install jcutils[hdfs]
+pip install jcutils[clickhouse]
+pip install jcutils[alibabacloud]
+pip install jcutils[huaweicloud]
+pip install jcutils[sentry]
+pip install jcutils[data]
+pip install jcutils[elasticsearch]
+pip install jcutils[utils]
+# 安装所有
+pip install jcutils[all]
 ```
 
 ## 快速开始
