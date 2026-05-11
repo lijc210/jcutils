@@ -1,6 +1,6 @@
 [project]
 name = "jcutils"
-version = "0.5.9"
+version = "0.6.0"
 description = "python utils"
 authors = [{ name = "lijc210", email = "lijc210@163.com" }]
 readme = "README.md"
@@ -158,9 +158,7 @@ url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 default = true
 
 [[tool.uv.index]]
-# url = "https://pypi.org/simple"
-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-default = true
+url = "https://pypi.org/simple"
 
 [tool.uv.pip]
 # index-url = "https://pypi.org/simple"
