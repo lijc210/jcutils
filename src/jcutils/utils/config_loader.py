@@ -8,19 +8,32 @@ import asyncio
 import os
 
 from dotenv import dotenv_values, load_dotenv
+from pydantic import create_model
+
+SCHEMA_PATH = os.path.join(os.getcwd(), "schema.py")
+
+try:
+    from schema import AppConfig
+except ImportError:
+    text: str = """
+schema.py 未找到，请在项目根目录创建schema.py，写入以下内容后重新运行：
+```
+from pydantic import BaseModel
+
+class AppConfig(BaseModel):
+    pass
+```
+    """
+    raise RuntimeError(text)
 
 # 先加载 .env（不覆盖已有环境变量）
 load_dotenv(override=False)
-
-SCHEMA_PATH = os.path.join(os.getcwd(), "schema.py")
 
 
 class ConfigLoader:
     """配置加载器"""
 
-    SCHEMA_PATH = SCHEMA_PATH
     _config_dict = None
-    _app_config = None
 
     @staticmethod
     def _merge_with_env(source_config: dict) -> dict:
@@ -67,7 +80,7 @@ class ConfigLoader:
             raise Exception(f"Nacos 配置拉取失败: DATA_ID={NACOS_DATA_ID}, GROUP={NACOS_GROUP}")
 
         # 注入额外信息
-        nacos_config["APP_ID"] = NACOS_DATA_ID
+        nacos_config["APP_NAME"] = NACOS_DATA_ID
         nacos_config["ENV"] = NACOS_NAMESPACE
 
         return cls._merge_with_env(nacos_config)
@@ -114,7 +127,7 @@ class ConfigLoader:
             raise Exception(f"Apollo 配置为空: APP_ID={APOLLO_APP_ID}, NAMESPACES={APOLLO_NAMESPACES}")
 
         # 注入额外信息
-        apollo_config["APP_ID"] = APOLLO_APP_ID
+        apollo_config["APP_NAME"] = APOLLO_APP_ID
         apollo_config["ENV"] = APOLLO_ENV
 
         return cls._merge_with_env(apollo_config)
@@ -124,10 +137,10 @@ class ConfigLoader:
         """从 .env 读取配置，合并环境变量"""
         print("[config] 从 .env 加载配置")
         ENV = os.getenv("ENV", default="dev").lower()
-        APP_ID = os.getenv("APP_ID", default="")
+        APP_NAME = os.getenv("APP_ID", default="")
         local_config = dict(dotenv_values(".env"))
         # 注入额外信息
-        local_config["APP_ID"] = APP_ID
+        local_config["APP_NAME"] = APP_NAME
         local_config["ENV"] = ENV
         return cls._merge_with_env(local_config)
 
@@ -155,6 +168,7 @@ class ConfigLoader:
     def _build_schema_content(cls, raw: dict) -> str:
         lines = [
             "from pydantic import BaseModel",
+            "from typing import Optional",
             "",
             "",
             "class AppConfig(BaseModel):",
@@ -164,16 +178,16 @@ class ConfigLoader:
         for key, value in sorted(raw.items()):
             k = cls._format_key(key)
             t = cls._infer_type(str(value))
-            lines.append(f"    {k}: {t}")
+            lines.append(f"    {k}: Optional[{t}] = None")
         return "\n".join(lines)
 
     @classmethod
-    def _sync_schema(cls, raw: dict) -> None:
+    def sync_schema(cls) -> None:
         """判断 schema.py 是否存在或发生变化，按需生成"""
-        new_content = cls._build_schema_content(raw)
+        new_content = cls._build_schema_content(cls._config_dict)
 
-        if os.path.exists(cls.SCHEMA_PATH):
-            with open(cls.SCHEMA_PATH, "r", encoding="utf-8") as f:
+        if os.path.exists(SCHEMA_PATH):
+            with open(SCHEMA_PATH, "r", encoding="utf-8") as f:
                 existing_content = f.read()
             if existing_content == new_content:
                 print("[config] schema.py 无变化，跳过生成")
@@ -182,12 +196,12 @@ class ConfigLoader:
         else:
             print("[config] schema.py 不存在，生成中")
 
-        with open(cls.SCHEMA_PATH, "w", encoding="utf-8") as f:
+        with open(SCHEMA_PATH, "w", encoding="utf-8") as f:
             f.write(new_content)
-        print(f"[config] schema.py 生成完成，共 {len(raw)} 个配置项")
+        print(f"[config] schema.py 生成完成，共 {len(cls._config_dict)} 个配置项")
 
     @classmethod
-    def load_config(cls) -> dict:
+    def load_config(cls) -> AppConfig:
         """
         根据 CONFIG_SOURCE 判断配置来源：
         - nacos  → 从 Nacos 拉取，再合并环境变量
@@ -197,35 +211,17 @@ class ConfigLoader:
         CONFIG_SOURCE = os.getenv("CONFIG_SOURCE", "local").lower()
 
         if CONFIG_SOURCE == "nacos":
-            raw = cls._load_from_nacos()
+            config_dict = cls._load_from_nacos()
         elif CONFIG_SOURCE == "apollo":
-            raw = cls._load_from_apollo()
+            config_dict = cls._load_from_apollo()
         else:
-            raw = cls._load_from_local()
+            config_dict = cls._load_from_local()
 
-        cls._sync_schema(raw)
-        return raw
+        cls._config_dict = config_dict
+        cls.sync_schema()
+        # 一行代码动态创建模型类
+        AppConfig = create_model("AppConfig", **{key: (type(value), ...) for key, value in config_dict.items()})
 
-    @classmethod
-    def get_config_dict(cls) -> dict:
-        """获取配置字典"""
-        if cls._config_dict is None:
-            cls._config_dict = cls.load_config()
-        return cls._config_dict
-
-
-try:
-    from schema import AppConfig
-
-    app_config: AppConfig = AppConfig.model_validate(ConfigLoader.get_config_dict())
-except ImportError:
-    # 文件不存在时动态创建
-    from pydantic import create_model
-
-    config_dict = ConfigLoader.get_config_dict()
-
-    # 一行代码动态创建模型类
-    AppConfig = create_model("AppConfig", **{key: (type(value), ...) for key, value in config_dict.items()})
-
-    # 实例化得到 BaseModel 对象
-    app_config = AppConfig(**config_dict)
+        # 实例化得到 BaseModel 对象
+        app_config = AppConfig(**config_dict)
+        return app_config

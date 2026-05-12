@@ -5,6 +5,6 @@
 @Desc    :   None
 """
 
-from .config_loader import ConfigLoader, app_config
+from .config_loader import ConfigLoader
 
-__all__ = ["ConfigLoader", "app_config"]
+__all__ = ["ConfigLoader"]

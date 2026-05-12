@@ -1,3 +1,7 @@
-from src.jcutils.utils.config_loader import app_config
+from src.jcutils.utils.config_loader import ConfigLoader
 
-print(app_config.TEST)
+app_config = ConfigLoader.load_config()
+
+print("aaa")
+print(app_config.APP_NAME)
+print("bbb")
