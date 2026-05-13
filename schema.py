@@ -3,8 +3,8 @@ from typing import Optional
 
 
 class AppConfig(BaseModel):
-    APP_NAME: Optional[str] = None
-    ENV: Optional[str] = None
+    APP_NAME: str = ""
+    ENV: str = ""
     MYSQL_TEST_CONNECT_TIMEOUT: Optional[int] = None
     MYSQL_TEST_DB: Optional[str] = None
     MYSQL_TEST_HOST: Optional[str] = None

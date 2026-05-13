@@ -168,7 +168,10 @@ class ConfigLoader:
         for key, value in sorted(raw.items()):
             k = cls._format_key(key)
             t = cls._infer_type(str(value))
-            lines.append(f"    {k}: Optional[{t}] = None")
+            if k in ("ENV", "APP_NAME", "DATA_DIR", "LOGS_DIR"):
+                lines.append(f'    {k}: {t} = ""')
+            else:
+                lines.append(f"    {k}: Optional[{t}] = None")
         return "\n".join(lines)
 
     @classmethod
@@ -182,7 +185,7 @@ class ConfigLoader:
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             sys.modules["schema"] = module
-        return module.AppConfig
+        return getattr(module, "AppConfig")
 
     @classmethod
     def sync_schema(cls) -> type[AppConfig]:
