@@ -168,10 +168,7 @@ class ConfigLoader:
         for key, value in sorted(raw.items()):
             k = cls._format_key(key)
             t = cls._infer_type(str(value))
-            if k in ("ENV", "APP_NAME", "DATA_DIR", "LOGS_DIR"):
-                lines.append(f'    {k}: {t} = ""')
-            else:
-                lines.append(f"    {k}: Optional[{t}] = None")
+            lines.append(f"    {k}: {t}")
         return "\n".join(lines)
 
     @classmethod

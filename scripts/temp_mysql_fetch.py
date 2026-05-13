@@ -1,5 +1,7 @@
 from jcutils.client import MySqlClient
-from jcutils.utils import app_config as CONFIG
+from jcutils.utils import ConfigLoader
+
+CONFIG = ConfigLoader.load_config()
 
 # 创建连接池客户端（此时不会创建任何连接池）
 mysql_client = MySqlClient(
