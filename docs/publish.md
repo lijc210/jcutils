@@ -10,6 +10,6 @@ uv publish
 
 # github打包发布(跨平台)
 ```
-❯ git tag v0.6.1
-❯ git push origin v0.6.1
+git tag v0.6.1
+git push origin v0.6.1
 ```
