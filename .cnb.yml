@@ -4,6 +4,11 @@ main:
         # 引用密钥仓库中的特定文件
         - https://cnb.cool/lijc210/secret/-/blob/main/env.prod.yml
       stages:
+        - name: 读取版本号并打tag
+          script: |
+            VERSION=$(python3 -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+            git tag "v$VERSION" || echo "tag已存在，跳过"
+
         - name: 同步到github
           image: tencentcom/git-sync
           env:
