@@ -23,7 +23,7 @@ uv self update
 ## 安装环境
 
 ``` shell
-uv python pin 3.11.1
+uv python pin 3.13
 uv sync
 ```
 

@@ -12,5 +12,6 @@ main:
             auth_type: https
             username: ${GITHUB_USER}
             password: ${GITHUB_TOKEN}
-            sync_mode: mirror
-            force: true
+            sync_mode: push # 推送
+            force: true # 强制推送
+            push_tags: true
