@@ -112,9 +112,8 @@ pip install jcutils[clickhouse]
 pip install jcutils[alibabacloud]
 pip install jcutils[huaweicloud]
 pip install jcutils[sentry]
-pip install jcutils[data]
+pip install jcutils[numpy]
 pip install jcutils[elasticsearch]
-pip install jcutils[utils]
 # 安装所有
 pip install jcutils[all]
 ```

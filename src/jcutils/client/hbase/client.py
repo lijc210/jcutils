@@ -4,7 +4,10 @@ Created on 2016/6/28
 Desc: 功能描述。
 """
 
-import happybase
+try:
+    import happybase
+except ImportError:
+    raise ImportError('请先安装：pip install happybase or uv add "happybase"')
 
 
 class HbaseClient:

@@ -4,8 +4,10 @@ Created on 2016/6/28
 Desc: 功能描述。。thrift2解决thrift1不能并发访问的问题，并且解决自己写的访问速度慢的问题，支持timeRange
 """
 
-import easybase
-from thriftpy2.thrift import TApplicationException
+try:
+    import easybase
+except ImportError:
+    raise ImportError('请先安装：pip install easybase or uv add "easybase"')
 
 
 class HbaseThrift2Client:
@@ -49,11 +51,7 @@ class HbaseThrift2Client:
         with self.conn() as conn:
             table = conn.table(table_name)
             columns = ["{}:{}".format(cols, column) for column in columns]
-            try:
-                row = table.row(key, columns=columns)
-            except (TApplicationException, Exception):  # 多进程中会报错
-                conn._refresh_thrift_client()
-                row = table.row(key, columns=columns)
+            row = table.row(key, columns=columns)
             return {
                 k.encode(): v.encode() if isinstance(v, str) else v for k, v in row.items() if k
             }  # 和hbase_client.py保持一致
@@ -68,11 +66,7 @@ class HbaseThrift2Client:
         with self.conn() as conn:
             table = conn.table(table_name)
             # columns = ['{0}:{1}'.format(cols, column) for column in columns]
-            try:
-                rows = table.rows(keys)
-            except (TApplicationException, Exception):  # 多进程中会报错
-                conn._refresh_thrift_client()
-                rows = table.rows(keys)
+            rows = table.rows(keys)
             result = [
                 (rowkey.encode(), {k.encode(): v.encode() for k, v in data.items()}) for rowkey, data in rows if rowkey
             ]  # 和hbase_client.py保持一致
