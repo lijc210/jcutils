@@ -124,6 +124,82 @@ class ConfigLoader:
         return cls._merge_with_env(apollo_config)
 
     @classmethod
+    def _load_from_consul(cls) -> dict:
+        """从 Consul KV 拉取配置，合并环境变量（环境变量优先级更高）
+
+        依赖：pip install python-consul2
+
+        KV 路径约定（两种方式二选一）：
+          1. 显式指定前缀：CONSUL_PREFIX=myapp/prod/
+          2. 自动拼接：{CONSUL_APP_ID}/{CONSUL_ENV}/  →  例如 myapp/dev/
+
+        KV 结构示例：
+          myapp/dev/DB_HOST        → "127.0.0.1"
+          myapp/dev/DB_PORT        → "5432"
+          myapp/dev/feature/ENABLE → "true"   # 子目录 "/" 会被替换为 "_"，key 变为 FEATURE_ENABLE
+        """
+        import consul.aio  # type: ignore
+
+        CONSUL_HOST = os.getenv("CONSUL_HOST", default="127.0.0.1")
+        CONSUL_PORT = int(os.getenv("CONSUL_PORT", default="8500"))
+        CONSUL_TOKEN = os.getenv("CONSUL_TOKEN", default="")
+        CONSUL_PREFIX = os.getenv("CONSUL_PREFIX", default="")
+        CONSUL_APP_ID = os.getenv("CONSUL_APP_ID", default="")
+        CONSUL_ENV = os.getenv("CONSUL_ENV") or os.getenv("ENV", default="dev").lower()
+
+        if not CONSUL_PREFIX and not CONSUL_APP_ID:
+            raise ValueError("使用 Consul 时必须配置 CONSUL_PREFIX 或 CONSUL_APP_ID（作为 KV 路径前缀）")
+
+        # 优先用 CONSUL_PREFIX，否则自动拼接 {APP_ID}/{ENV}/
+        kv_prefix = CONSUL_PREFIX or f"{CONSUL_APP_ID}/{CONSUL_ENV}/"
+        # 统一确保末尾有 "/"，避免 recurse 时匹配到同名前缀的其他路径
+        if not kv_prefix.endswith("/"):
+            kv_prefix += "/"
+
+        print(f"[config] 从 Consul 加载配置: {CONSUL_HOST}:{CONSUL_PORT}")
+        print(f"[config] KV prefix: {kv_prefix}")
+
+        async def _fetch() -> dict:
+            client = consul.aio.Consul(
+                host=CONSUL_HOST,
+                port=CONSUL_PORT,
+                token=CONSUL_TOKEN or None,
+            )
+            try:
+                _, data = await client.kv.get(kv_prefix, recurse=True)
+            finally:
+                # python-consul2 aio 底层使用 aiohttp，需手动关闭 session
+                if hasattr(client.http, "_session") and client.http._session:
+                    await client.http._session.close()
+
+            if not data:
+                raise Exception(f"Consul KV 配置为空或路径不存在: prefix={kv_prefix}")
+
+            result = {}
+            prefix_len = len(kv_prefix)
+            for item in data:
+                raw_key: str = item["Key"]
+                raw_value: bytes | None = item["Value"]
+                if raw_value is None:
+                    continue  # 目录节点，跳过
+                # 去掉公共前缀，子路径 "/" → "_"，全部大写 → 对齐其他来源的 key 风格
+                key = raw_key[prefix_len:].lstrip("/").replace("/", "_").upper()
+                if not key:
+                    continue
+                result[key] = raw_value.decode("utf-8")
+
+            return result
+
+        consul_config = asyncio.run(_fetch())
+        if not consul_config:
+            raise Exception(f"Consul 配置拉取后为空: prefix={kv_prefix}")
+
+        consul_config["APP_NAME"] = CONSUL_APP_ID or kv_prefix.strip("/").split("/")[0]
+        consul_config["ENV"] = CONSUL_ENV
+
+        return cls._merge_with_env(consul_config)
+
+    @classmethod
     def _load_from_local(cls) -> dict:
         """从 .env 读取配置，合并环境变量"""
         print("[config] 从 .env 加载配置")
@@ -245,6 +321,8 @@ class ConfigLoader:
             config_dict = cls._load_from_nacos()
         elif CONFIG_SOURCE == "apollo":
             config_dict = cls._load_from_apollo()
+        elif CONFIG_SOURCE == "consul":
+            config_dict = cls._load_from_consul()
         else:
             config_dict = cls._load_from_local()
 

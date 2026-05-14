@@ -28,6 +28,7 @@ dependencies = [
 config = [
     "nacos-sdk-python>=2.0.11",
     "pyapollo-zenkilan>=0.2.0",
+    "python-consul2",
 ]
 
 # mysql相关
