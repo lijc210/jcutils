@@ -271,6 +271,6 @@ class ConfigLoader:
             type_hint = cls._infer_type(str(v))
             typed_config[k] = cls._cast_value(str(v), type_hint)
 
-        app_config = LatestAppConfig.model_construct(typed_config)
+        app_config = LatestAppConfig.model_construct(**typed_config)
 
         return app_config
