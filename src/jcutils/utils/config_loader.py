@@ -151,6 +151,19 @@ class ConfigLoader:
         return "str"
 
     @staticmethod
+    def _cast_value(value: str, type_hint: str):
+        """将字符串值按类型提示转换为对应的 Python 类型"""
+        if not isinstance(value, str):
+            return value  # 非字符串（已经是正确类型）直接返回
+        if type_hint == "bool":
+            return value.lower() == "true"
+        if type_hint == "int":
+            return int(value)
+        if type_hint == "float":
+            return float(value)
+        return value  # str，保持原样
+
+    @staticmethod
     def _format_key(key: str) -> str:
         return key.replace("-", "_").replace(".", "_").upper()
 
@@ -250,9 +263,14 @@ class ConfigLoader:
         # 生成/更新 schema.py，并拿到当次运行最新的 AppConfig 类
         LatestAppConfig = cls.sync_schema()
 
-        # 只传入 schema 中已定义的字段，忽略多余的 key
-        app_config = LatestAppConfig.model_construct(
-            **{k: v for k, v in config_dict.items() if k in LatestAppConfig.model_fields}
-        )
+        # 按 schema 字段定义的类型，将字符串值转换为正确的 Python 类型
+        typed_config = {}
+        for k, v in config_dict.items():
+            if k not in LatestAppConfig.model_fields:  # 忽略 schema 中未定义的字段
+                continue
+            type_hint = cls._infer_type(str(v))
+            typed_config[k] = cls._cast_value(str(v), type_hint)
+
+        app_config = LatestAppConfig.model_construct(typed_config)
 
         return app_config
