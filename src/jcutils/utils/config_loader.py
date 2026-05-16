@@ -151,10 +151,7 @@ class ConfigLoader:
             raise ValueError("使用 Consul 时必须配置 CONSUL_PREFIX 或 CONSUL_APP_ID（作为 KV 路径前缀）")
 
         # 优先用 CONSUL_PREFIX，否则自动拼接 {APP_ID}/{ENV}/
-        kv_prefix = CONSUL_PREFIX or f"{CONSUL_APP_ID}/{CONSUL_ENV}/"
-        # 统一确保末尾有 "/"，避免 recurse 时匹配到同名前缀的其他路径
-        if not kv_prefix.endswith("/"):
-            kv_prefix += "/"
+        kv_prefix = CONSUL_PREFIX or f"{CONSUL_APP_ID}/{CONSUL_ENV}"
 
         print(f"[config] 从 Consul 加载配置: {CONSUL_HOST}:{CONSUL_PORT}")
         print(f"[config] KV prefix: {kv_prefix}")
@@ -175,19 +172,24 @@ class ConfigLoader:
             if not data:
                 raise Exception(f"Consul KV 配置为空或路径不存在: prefix={kv_prefix}")
 
-            result = {}
-            prefix_len = len(kv_prefix)
-            for item in data:
-                raw_key: str = item["Key"]
-                raw_value: bytes | None = item["Value"]
-                if raw_value is None:
-                    continue  # 目录节点，跳过
-                # 去掉公共前缀，子路径 "/" → "_"，全部大写 → 对齐其他来源的 key 风格
-                key = raw_key[prefix_len:].lstrip("/").replace("/", "_").upper()
-                if not key:
-                    continue
-                result[key] = raw_value.decode("utf-8")
+            # print("data:", data)
 
+            result = {}
+            for item in data:
+                # print(item)
+                key = item.get("Key")
+                value = item.get("Value").decode("utf-8")
+                # print("value:", value)
+                line = value.splitlines()
+                for aline in line:
+                    alist = aline.split("=", 1)
+                    if len(alist) == 2:
+                        k, v = alist
+                        result[k.strip()] = v.strip()
+                    else:
+                        if "/" in key:
+                            continue
+                        result[key.strip()] = aline.strip()
             return result
 
         consul_config = asyncio.run(_fetch())
