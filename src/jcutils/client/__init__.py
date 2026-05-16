@@ -31,7 +31,7 @@ if TYPE_CHECKING:
     from .postgres.async_client import AsyncPostgresClient
     from .postgres.client import PostgresClient
     from .presto.client import PrestoClient
-    from .qiniu.client import Qiniu
+    from .qiniu.client import QiniuClient
     from .qyweixin.bot import QyWeixinBot
     from .qyweixin.client import QyWeixinClient
     from .redis.async_client import AsyncRedisClient
@@ -75,7 +75,7 @@ def _lazy_import(module_path, class_names):
 (AsyncPostgresClient,) = _lazy_import(".postgres.async_client", ["AsyncPostgresClient"])
 (PostgresClient,) = _lazy_import(".postgres.client", ["PostgresClient"])
 (PrestoClient,) = _lazy_import(".presto.client", ["PrestoClient"])
-(Qiniu,) = _lazy_import(".qiniu.client", ["Qiniu"])
+(QiniuClient,) = _lazy_import(".qiniu.client", ["QiniuClient"])
 (QyWeixinBot,) = _lazy_import(".qyweixin.bot", ["QyWeixinBot"])
 (QyWeixinClient,) = _lazy_import(".qyweixin.client", ["QyWeixinClient"])
 (AsyncRedisClient,) = _lazy_import(".redis.async_client", ["AsyncRedisClient"])
