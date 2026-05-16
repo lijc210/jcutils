@@ -1,6 +1,6 @@
 [project]
 name = "jcutils"
-version = "0.6.8"
+version = "0.6.9"
 description = "python utils"
 authors = [{ name = "lijc210", email = "lijc210@163.com" }]
 readme = "README.md"
@@ -20,7 +20,8 @@ dependencies = [
     "python-dotenv",
     "pydantic",
     "requests",
-    "python-dateutil"
+    "python-dateutil",
+
 ]
 
 [project.optional-dependencies]
@@ -55,10 +56,6 @@ pymssql = [
     "pymssql",
 ]
 
-# boto3
-boto3 = [
-    "boto3>=1.26.0",
-]
 
 # Redis 相关
 redis = [

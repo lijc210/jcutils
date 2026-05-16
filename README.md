@@ -38,7 +38,7 @@
 - `maxcompute.client.MaxComputeClient`：阿里云 MaxCompute（ODPS）
 - `dataworks.client.DataworksClient`：阿里云 DataWorks
 - `s3.client.S3Bucket`：AWS S3 兼容存储
-- `qiniu.client.Qiniu`：七牛云存储
+- `qiniu.client.QiniuClient`：七牛云存储
 - `hdfs.client.HdfsClient`：HDFS 客户端
 
 #### 消息与通信
@@ -104,7 +104,6 @@ pip install jcutils[config]
 pip install jcutils[mysql]
 pip install jcutils[postgresql]
 pip install jcutils[pymssql]
-pip install jcutils[boto3]
 pip install jcutils[redis]
 pip install jcutils[kafka]
 pip install jcutils[hdfs]
