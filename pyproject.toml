@@ -1,6 +1,6 @@
 [project]
 name = "jcutils"
-version = "0.6.9"
+version = "0.7.0"
 description = "python utils"
 authors = [{ name = "lijc210", email = "lijc210@163.com" }]
 readme = "README.md"
@@ -21,7 +21,8 @@ dependencies = [
     "pydantic",
     "requests",
     "python-dateutil",
-
+    "qiniu>=7.17.0",
+    "boto3>=1.42.97",
 ]
 
 [project.optional-dependencies]

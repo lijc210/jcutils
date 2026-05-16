@@ -175,12 +175,29 @@ class S3Bucket:
                 return False
         return True
 
+    def delete_object(self, bucket_name, object_name):
+        """
+        删除单个文件
+        args:
+            bucket_name: bucket名称
+            object_name: 对象名称（文件路径）
+        returns:
+            bool: 删除是否成功
+        """
+        try:
+            self.s3.delete_object(Bucket=bucket_name, Key=object_name)
+            print(f"deleted {object_name}")
+            return True
+        except Exception as exc:
+            print("error occurred.", exc)
+            return False
+
 
 if __name__ == "__main__":
     BUCKET_NAME = "file"
-    access_key = ""
-    secret_key = ""
-    endpoint_url = ""
+    access_key = os.environ.get("R2_ACCESS_KEY")
+    secret_key = os.environ.get("R2_SECRET_KEY")
+    endpoint_url = os.environ.get("R2_ENDPOINT_URL")
     s3_buk = S3Bucket(access_key=access_key, secret_key=secret_key, endponint=endpoint_url)
     print(s3_buk.list_buckets())
 
@@ -193,3 +210,6 @@ if __name__ == "__main__":
 
     # # # 下载
     # s3_buk.download_file(BUCKET_NAME, "client.py", local_path)
+
+    # # # 删除
+    s3_buk.delete_object(BUCKET_NAME, "client.py")

@@ -99,12 +99,25 @@ class QiniuClient:
             f.write(r.content)
         return True
 
+    def delete_object(self, bucket_name, object_name):
+        """
+        删除单个文件
+        args:
+            bucket_name: bucket名称
+            object_name: 对象名称（文件路径）
+        returns:
+            bool: 删除是否成功
+        """
+        bucket = BucketManager(self.q)
+        ret, info = bucket.delete(bucket_name, object_name)
+        print(info)
+
 
 if __name__ == "__main__":
     import os
 
-    access_key = ""
-    secret_key = ""
+    access_key = os.environ.get("QINIU_ACCESS_KEY")
+    secret_key = os.environ.get("QINIU_SECRET_KEY")
 
     s3_buk = QiniuClient(access_key=access_key, secret_key=secret_key)
 
@@ -116,10 +129,13 @@ if __name__ == "__main__":
     # file_list = s3_buk.list_objects(BUCKET_NAME, "")
     # print(file_list)
 
-    # # # 上传
-    # local_path1 = os.path.join(os.getcwd(), "src/jcutils/client/s3/qiniu_client.py")
-    # # s3_buk.upload_file(local_path1, BUCKET_NAME, "qiniu_client.py")
+    # # 上传
+    local_path1 = os.path.join(os.getcwd(), "src/jcutils/client/qiniu/client.py")
+    s3_buk.upload_file(local_path1, BUCKET_NAME, "client.py")
 
     # 下载
-    local_path2 = os.path.join(os.getcwd(), "src/jcutils/client/s3/qiniu_client_tmp.py")
-    s3_buk.download_file(BUCKET_NAME, "qiniu_client.py", local_path2)
+    local_path2 = os.path.join(os.getcwd(), "src/jcutils/client/qiniu/client_tmp.py")
+    s3_buk.download_file(BUCKET_NAME, "client.py", local_path2)
+
+    # 删除
+    s3_buk.delete_object(BUCKET_NAME, "client.py")
