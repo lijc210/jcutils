@@ -89,7 +89,7 @@ class ConfigLoader:
         APOLLO_APP_ID = os.getenv("APOLLO_APP_ID", default="")
         APOLLO_APP_SECRET = os.getenv("APOLLO_APP_SECRET", default="")
         APOLLO_CLUSTER = os.getenv("APOLLO_CLUSTER", default="default")
-        APOLLO_ENV = os.getenv("APOLLO_ENV") or os.getenv("ENV", "DEV")
+        APOLLO_ENV = os.getenv("ENV", "DEV")
         APOLLO_NAMESPACES = os.getenv("APOLLO_NAMESPACES", "application").split(",")
 
         if not APOLLO_META_SERVER_ADDRESS:
@@ -145,13 +145,13 @@ class ConfigLoader:
         CONSUL_TOKEN = os.getenv("CONSUL_TOKEN", default="")
         CONSUL_PREFIX = os.getenv("CONSUL_PREFIX", default="")
         CONSUL_APP_ID = os.getenv("CONSUL_APP_ID", default="")
-        CONSUL_ENV = os.getenv("CONSUL_ENV") or os.getenv("ENV", default="dev").lower()
+        CONSUL_ENV = os.getenv("ENV", default="dev").lower()
 
         if not CONSUL_PREFIX and not CONSUL_APP_ID:
             raise ValueError("使用 Consul 时必须配置 CONSUL_PREFIX 或 CONSUL_APP_ID（作为 KV 路径前缀）")
 
         # 优先用 CONSUL_PREFIX，否则自动拼接 {APP_ID}/{ENV}/
-        kv_prefix = CONSUL_PREFIX or f"{CONSUL_APP_ID}/{CONSUL_ENV}"
+        kv_prefix = CONSUL_PREFIX or f"/{CONSUL_APP_ID}/{CONSUL_ENV}"
 
         print(f"[config] 从 Consul 加载配置: {CONSUL_HOST}:{CONSUL_PORT}")
         print(f"[config] KV prefix: {kv_prefix}")
@@ -202,6 +202,111 @@ class ConfigLoader:
         return cls._merge_with_env(consul_config)
 
     @classmethod
+    def _load_from_etcd(cls) -> dict:
+        """从 etcd 拉取配置，合并环境变量（环境变量优先级更高）
+
+        依赖：pip install etcd3-py
+        或者：pip install python-etcd3  （二选一）
+
+        KV 路径约定（两种方式二选一）：
+        1. 显式指定前缀：ETCD_PREFIX=myapp/prod/
+        2. 自动拼接：{ETCD_APP_ID}/{ETCD_ENV}/  →  例如 myapp/dev/
+
+        KV 结构示例：
+        myapp/dev/DB_HOST  → "127.0.0.1"
+        myapp/dev/DB_PORT  → "5432"
+
+        Value 支持两种格式：
+        1. 直接值：  "127.0.0.1"
+        2. 多行 env 格式：
+                DB_HOST=127.0.0.1
+                DB_PORT=5432
+        """
+        import base64
+
+        import httpx  # type: ignore  pip install httpx
+
+        ETCD_HOST = os.getenv("ETCD_HOST", default="127.0.0.1")
+        ETCD_PORT = int(os.getenv("ETCD_PORT", default="2379"))
+        ETCD_PREFIX = os.getenv("ETCD_PREFIX", default="")
+        ETCD_APP_ID = os.getenv("ETCD_APP_ID", default="")
+        ETCD_ENV = os.getenv("ENV", default="dev").lower()
+        ETCD_USER = os.getenv("ETCD_USER", default="")
+        ETCD_PASSWORD = os.getenv("ETCD_PASSWORD", default="")
+
+        if not ETCD_PREFIX and not ETCD_APP_ID:
+            raise ValueError("使用 etcd 时必须配置 ETCD_PREFIX 或 ETCD_APP_ID")
+
+        kv_prefix = ETCD_PREFIX or f"/{ETCD_APP_ID}/{ETCD_ENV}"
+        # if not kv_prefix.endswith("/"):
+        #     kv_prefix += "/"
+
+        print(f"[config] 从 etcd 加载配置: {ETCD_HOST}:{ETCD_PORT}")
+        print(f"[config] KV prefix: {kv_prefix}")
+
+        # etcd v3 gRPC-gateway 接口
+        base_url = f"http://{ETCD_HOST}:{ETCD_PORT}"
+
+        key_b64 = base64.b64encode(kv_prefix.encode()).decode()
+        # range_end: 前缀查询技巧，将最后一个字节 +1
+        prefix_bytes = kv_prefix.encode()
+        range_end_bytes = prefix_bytes[:-1] + bytes([prefix_bytes[-1] + 1])
+        range_end_b64 = base64.b64encode(range_end_bytes).decode()
+
+        # 先获取 token
+        token = None
+        if ETCD_USER and ETCD_PASSWORD:
+            auth_resp = httpx.post(
+                f"{base_url}/v3/auth/authenticate",
+                json={"name": ETCD_USER, "password": ETCD_PASSWORD},
+            )
+            auth_resp.raise_for_status()
+            token = auth_resp.json().get("token")
+
+        headers = {"Authorization": token} if token else {}
+
+        resp = httpx.post(
+            f"{base_url}/v3/kv/range",
+            json={"key": key_b64, "range_end": range_end_b64},
+            headers=headers,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+
+        kvs = data.get("kvs") or []
+        if not kvs:
+            raise Exception(f"etcd KV 配置为空或路径不存在: prefix={kv_prefix}")
+
+        result = {}
+        for item in kvs:
+            full_key = base64.b64decode(item["key"]).decode("utf-8")
+            relative_key = full_key[len(kv_prefix) :]
+            value = base64.b64decode(item["value"]).decode("utf-8") if item.get("value") else ""
+
+            lines = value.splitlines()
+            if len(lines) > 1 or (len(lines) == 1 and "=" in value):
+                for line in lines:
+                    line = line.strip()
+                    if not line or line.startswith("#"):
+                        continue
+                    parts = line.split("=", 1)
+                    if len(parts) == 2:
+                        k, v = parts
+                        result[k.strip()] = v.strip()
+            else:
+                config_key = relative_key.replace("/", "_").upper()
+                if config_key:
+                    result[config_key] = value
+
+        if not result:
+            raise Exception(f"etcd 配置解析后为空: prefix={kv_prefix}")
+
+        result["APP_NAME"] = ETCD_APP_ID or kv_prefix.strip("/").split("/")[0]
+        result["ENV"] = ETCD_ENV
+
+        return cls._merge_with_env(result)
+
+    @classmethod
     def _load_from_local(cls) -> dict:
         """从 .env 读取配置，合并环境变量"""
         print("[config] 从 .env 加载配置")
@@ -249,7 +354,6 @@ class ConfigLoader:
     def _build_schema_content(cls, raw: dict) -> str:
         lines = [
             "from pydantic import BaseModel",
-            "from typing import Optional",
             "",
             "",
             "class AppConfig(BaseModel):",
@@ -325,6 +429,8 @@ class ConfigLoader:
             config_dict = cls._load_from_apollo()
         elif CONFIG_SOURCE == "consul":
             config_dict = cls._load_from_consul()
+        elif CONFIG_SOURCE == "etcd":
+            config_dict = cls._load_from_etcd()
         else:
             config_dict = cls._load_from_local()
 

@@ -1,6 +1,6 @@
 [project]
 name = "jcutils"
-version = "0.7.0"
+version = "0.7.1"
 description = "python utils"
 authors = [{ name = "lijc210", email = "lijc210@163.com" }]
 readme = "README.md"
@@ -21,8 +21,7 @@ dependencies = [
     "pydantic",
     "requests",
     "python-dateutil",
-    "qiniu>=7.17.0",
-    "boto3>=1.42.97",
+    "httpx",
 ]
 
 [project.optional-dependencies]
@@ -31,6 +30,7 @@ config = [
     "nacos-sdk-python>=2.0.11",
     "pyapollo-zenkilan>=0.2.0",
     "python-consul2",
+    "etcd3"
 ]
 
 # mysql相关
