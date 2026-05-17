@@ -140,6 +140,7 @@ class ConfigLoader:
         """
         import consul.aio  # type: ignore
 
+        CONSUL_SCHEME = os.getenv("CONSUL_SCHEME", default="http")
         CONSUL_HOST = os.getenv("CONSUL_HOST", default="127.0.0.1")
         CONSUL_PORT = int(os.getenv("CONSUL_PORT", default="8500"))
         CONSUL_TOKEN = os.getenv("CONSUL_TOKEN", default="")
@@ -151,7 +152,7 @@ class ConfigLoader:
             raise ValueError("使用 Consul 时必须配置 CONSUL_PREFIX 或 CONSUL_APP_ID（作为 KV 路径前缀）")
 
         # 优先用 CONSUL_PREFIX，否则自动拼接 {APP_ID}/{ENV}/
-        kv_prefix = CONSUL_PREFIX or f"/{CONSUL_APP_ID}/{CONSUL_ENV}"
+        kv_prefix = CONSUL_PREFIX or f"{CONSUL_APP_ID}/{CONSUL_ENV}"
 
         print(f"[config] 从 Consul 加载配置: {CONSUL_HOST}:{CONSUL_PORT}")
         print(f"[config] KV prefix: {kv_prefix}")
@@ -160,6 +161,7 @@ class ConfigLoader:
             client = consul.aio.Consul(
                 host=CONSUL_HOST,
                 port=CONSUL_PORT,
+                scheme=CONSUL_SCHEME,
                 token=CONSUL_TOKEN or None,
             )
             try:
@@ -226,6 +228,7 @@ class ConfigLoader:
 
         import httpx  # type: ignore  pip install httpx
 
+        ETCD_SCHEME = os.getenv("ETCD_SCHEME", default="http")
         ETCD_HOST = os.getenv("ETCD_HOST", default="127.0.0.1")
         ETCD_PORT = int(os.getenv("ETCD_PORT", default="2379"))
         ETCD_PREFIX = os.getenv("ETCD_PREFIX", default="")
@@ -237,7 +240,7 @@ class ConfigLoader:
         if not ETCD_PREFIX and not ETCD_APP_ID:
             raise ValueError("使用 etcd 时必须配置 ETCD_PREFIX 或 ETCD_APP_ID")
 
-        kv_prefix = ETCD_PREFIX or f"/{ETCD_APP_ID}/{ETCD_ENV}"
+        kv_prefix = ETCD_PREFIX or f"{ETCD_APP_ID}/{ETCD_ENV}"
         # if not kv_prefix.endswith("/"):
         #     kv_prefix += "/"
 
@@ -245,7 +248,7 @@ class ConfigLoader:
         print(f"[config] KV prefix: {kv_prefix}")
 
         # etcd v3 gRPC-gateway 接口
-        base_url = f"http://{ETCD_HOST}:{ETCD_PORT}"
+        base_url = f"{ETCD_SCHEME}://{ETCD_HOST}:{ETCD_PORT}"
 
         key_b64 = base64.b64encode(kv_prefix.encode()).decode()
         # range_end: 前缀查询技巧，将最后一个字节 +1
