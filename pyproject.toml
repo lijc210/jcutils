@@ -1,6 +1,6 @@
 [project]
 name = "jcutils"
-version = "0.7.2"
+version = "0.7.3"
 description = "python utils"
 authors = [{ name = "lijc210", email = "lijc210@163.com" }]
 readme = "README.md"
@@ -22,6 +22,7 @@ dependencies = [
     "requests",
     "python-dateutil",
     "httpx",
+    "qiniu>=7.17.0",
 ]
 
 [project.optional-dependencies]
@@ -29,8 +30,6 @@ dependencies = [
 config = [
     "nacos-sdk-python>=2.0.11",
     "pyapollo-zenkilan>=0.2.0",
-    "python-consul2",
-    "etcd3"
 ]
 
 # mysql相关
@@ -109,15 +108,9 @@ elasticsearch = [
     "elasticsearch>=8.10.0",
 ]
 
-# hbase
-hbase = [
-    "easybase",
-    "happybase"
-]
-
 # 包含所有可选依赖
 all = [
-    "jcutils[config,mysql,postgresql,pymssql,redis,kafka,clickhouse,alibabacloud,huaweicloud,sentry,numpy,elasticsearch,hbase]",
+    "jcutils[config,mysql,postgresql,pymssql,redis,kafka,clickhouse,alibabacloud,huaweicloud,sentry,numpy,elasticsearch]",
 ]
 
 [project.scripts]
@@ -139,10 +132,10 @@ allow-direct-references = true
 
 [[tool.uv.index]]
 url = "https://pypi.org/simple"
-default = true
 
 [[tool.uv.index]]
 url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+default = true
 
 [tool.uv.pip]
 # index-url = "https://pypi.org/simple"

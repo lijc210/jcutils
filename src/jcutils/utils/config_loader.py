@@ -127,7 +127,7 @@ class ConfigLoader:
     def _load_from_consul(cls) -> dict:
         """从 Consul KV 拉取配置，合并环境变量（环境变量优先级更高）
 
-        依赖：pip install python-consul2
+        依赖：pip install httpx
 
         KV 路径约定（两种方式二选一）：
           1. 显式指定前缀：CONSUL_PREFIX=myapp/prod/
@@ -138,7 +138,9 @@ class ConfigLoader:
           myapp/dev/DB_PORT        → "5432"
           myapp/dev/feature/ENABLE → "true"   # 子目录 "/" 会被替换为 "_"，key 变为 FEATURE_ENABLE
         """
-        import consul.aio  # type: ignore
+        import base64
+
+        import httpx
 
         CONSUL_SCHEME = os.getenv("CONSUL_SCHEME", default="http")
         CONSUL_HOST = os.getenv("CONSUL_HOST", default="127.0.0.1")
@@ -158,32 +160,26 @@ class ConfigLoader:
         print(f"[config] KV prefix: {kv_prefix}")
 
         async def _fetch() -> dict:
-            client = consul.aio.Consul(
-                host=CONSUL_HOST,
-                port=CONSUL_PORT,
-                scheme=CONSUL_SCHEME,
-                token=CONSUL_TOKEN or None,
-            )
-            try:
-                _, data = await client.kv.get(kv_prefix, recurse=True)
-            finally:
-                # python-consul2 aio 底层使用 aiohttp，需手动关闭 session
-                if hasattr(client.http, "_session") and client.http._session:
-                    await client.http._session.close()
+            base_url = f"{CONSUL_SCHEME}://{CONSUL_HOST}:{CONSUL_PORT}"
+            headers = {}
+            if CONSUL_TOKEN:
+                headers["X-Consul-Token"] = CONSUL_TOKEN
+
+            async with httpx.AsyncClient(base_url=base_url) as client:
+                resp = await client.get(f"/v1/kv/{kv_prefix}", params={"recurse": "true"}, headers=headers)
+                if resp.status_code == 404:
+                    raise Exception(f"Consul KV 路径不存在: prefix={kv_prefix}")
+                resp.raise_for_status()
+                data = resp.json()
 
             if not data:
                 raise Exception(f"Consul KV 配置为空或路径不存在: prefix={kv_prefix}")
 
-            # print("data:", data)
-
             result = {}
             for item in data:
-                # print(item)
                 key = item.get("Key")
-                value = item.get("Value").decode("utf-8")
-                # print("value:", value)
-                line = value.splitlines()
-                for aline in line:
+                value = base64.b64decode(item.get("Value", "")).decode("utf-8")
+                for aline in value.splitlines():
                     alist = aline.split("=", 1)
                     if len(alist) == 2:
                         k, v = alist
@@ -206,9 +202,6 @@ class ConfigLoader:
     @classmethod
     def _load_from_etcd(cls) -> dict:
         """从 etcd 拉取配置，合并环境变量（环境变量优先级更高）
-
-        依赖：pip install etcd3-py
-        或者：pip install python-etcd3  （二选一）
 
         KV 路径约定（两种方式二选一）：
         1. 显式指定前缀：ETCD_PREFIX=myapp/prod/
