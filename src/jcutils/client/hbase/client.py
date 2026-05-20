@@ -6,8 +6,10 @@ Desc: 功能描述。
 
 try:
     import happybase
-except ImportError:
+except ModuleNotFoundError:
     raise ImportError('请先安装：pip install happybase or uv add "happybase"')
+except Exception as e:
+    raise ImportError(f"happybase 导入失败: {e}")
 
 
 class HbaseClient:

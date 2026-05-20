@@ -7,12 +7,14 @@ Desc: PostgreSQL 异步连接池客户端，内部使用 async with 上下文管
 使用 asyncpg 内置连接池
 """
 
-import logging
 from typing import Any, AsyncGenerator, Dict, List, Optional, Sequence, Tuple, Union
 
-import asyncpg
-
-logger = logging.getLogger(__name__)
+try:
+    import asyncpg
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install jcutils[postgresql] or uv add "jcutils[postgresql]"')
+except Exception as e:
+    raise ImportError(f"asyncpg 导入失败: {e}")
 
 
 class AsyncPostgresClient:

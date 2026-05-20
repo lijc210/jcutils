@@ -10,9 +10,11 @@ Microsoft SQL Server 连接客户端，内部使用 with 上下文管理器自�
 from typing import Any, Dict, Generator, List, Optional, Sequence, Tuple, Union
 
 try:
-    import pymssql  # type: ignore
-except ImportError:
-    raise ImportError("请先安装：pip install jcutils[pymssql]")
+    import pymssql
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install jcutils[pymssql] or uv add "jcutils[pymssql]"')
+except Exception as e:
+    raise ImportError(f"pymssql 导入失败: {e}")
 
 
 class MsSqlClient:

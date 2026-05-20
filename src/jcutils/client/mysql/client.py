@@ -12,8 +12,10 @@ from typing import Any, Dict, Generator, Optional, Sequence, Tuple, Union
 try:
     import pymysql  # type: ignore
     from dbutils.pooled_db import PooledDB  # type: ignore
-except ImportError:
+except ModuleNotFoundError:
     raise ImportError('请先安装：pip install jcutils[mysql] or uv add "jcutils[mysql]"')
+except Exception as e:
+    raise ImportError(f"pymysql 导入失败: {e}")
 
 
 class MySqlClient:

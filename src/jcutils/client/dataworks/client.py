@@ -6,10 +6,15 @@
 @Desc    :   None
 """
 
-from alibabacloud_dataworks_public20200518.client import (
-    Client as dataworks_public20200518Client,
-)
-from alibabacloud_tea_openapi import models as open_api_models
+try:
+    from alibabacloud_dataworks_public20200518.client import (
+        Client as dataworks_public20200518Client,
+    )
+    from alibabacloud_tea_openapi import models as open_api_models
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install jcutils[alibabacloud] or uv add "jcutils[alibabacloud]"')
+except Exception as e:
+    raise ImportError(f"alibabacloud 依赖导入失败: {e}")
 
 
 class DataworksClient:

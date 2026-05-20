@@ -11,8 +11,10 @@ from typing import Any, Dict, Generator, List, Optional, Sequence, Tuple, Union
 
 try:
     import pyodbc  # type: ignore
-except ImportError:
-    raise ImportError("请先安装：pip install jcutils[odbc]")
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install pyodbc or uv add "pyodbc"')
+except Exception as e:
+    raise ImportError(f"pyodbc 导入失败: {e}")
 
 
 class PyodbcClient:

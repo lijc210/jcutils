@@ -7,7 +7,12 @@ Desc: Elasticsearch 客户端封装，支持旧版 API 的兼容层
 import traceback
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from elasticsearch import Elasticsearch, NotFoundError, helpers
+try:
+    from elasticsearch import Elasticsearch, NotFoundError, helpers
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install jcutils[elasticsearch] or uv add "jcutils[elasticsearch]"')
+except Exception as e:
+    raise ImportError(f"elasticsearch 导入失败: {e}")
 
 
 class EsClient:

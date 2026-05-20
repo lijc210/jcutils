@@ -9,7 +9,12 @@ Presto (Trino) 连接客户端，内部使用 with 上下文管理器自动管�
 
 from typing import Any, Dict, Generator, List, Optional, Sequence, Tuple, Union
 
-from pyhive import presto
+try:
+    from pyhive import presto
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install pyhive or uv add "pyhive"')
+except Exception as e:
+    raise ImportError(f"pyhive 导入失败: {e}")
 
 
 class PrestoClient:

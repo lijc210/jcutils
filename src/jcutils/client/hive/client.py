@@ -4,12 +4,12 @@ Created on 2016/11/22 0022 17:31
 Desc: python下远程查询hive
 """
 
-import sys
-
-if sys.version_info < (2, 7):
-    import pyhs2
-else:
+try:
     from pyhive import hive
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install pyhive or uv add "pyhive"')
+except Exception as e:
+    raise ImportError(f"pyhive 导入失败: {e}")
 
 
 class HiveClient:
@@ -20,18 +20,9 @@ class HiveClient:
         self.username = username
 
     def Conn(self):
-        if sys.version_info < (2, 7):
-            conn = pyhs2.connect(
-                host=self.host,
-                port=self.port,
-                authMechanism=self.authMechanism,
-                user=self.username,
-            )
-            cursor = conn.cursor()
-        else:
-            conn = hive.Connection(host=self.host, port=self.port, username=self.username)
-            cursor = conn.cursor()
-            return conn, cursor
+        conn = hive.Connection(host=self.host, port=self.port, username=self.username)
+        cursor = conn.cursor()
+        return conn, cursor
         return conn, cursor
 
     def query(self, sql):

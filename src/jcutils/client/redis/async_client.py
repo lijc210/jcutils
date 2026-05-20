@@ -37,8 +37,13 @@ Redis 异步客户端工具类
 
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import redis.asyncio as redis
-from redis.asyncio import RedisCluster
+try:
+    import redis.asyncio as redis
+    from redis.asyncio import RedisCluster
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install jcutils[redis] or uv add "jcutils[redis]"')
+except Exception as e:
+    raise ImportError(f"redis 导入失败: {e}")
 
 
 class AsyncRedisClient:

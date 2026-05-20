@@ -12,8 +12,10 @@ from typing import Any, Dict, Generator, Optional, Sequence, Tuple, Union
 try:
     from clickhouse_driver import connect  # type: ignore
     from clickhouse_driver.dbapi.extras import DictCursor  # type: ignore
-except ImportError:
-    raise ImportError("请先安装：pip install jcutils[clickhouse]")
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install jcutils[clickhouse] or uv add "jcutils[clickhouse]"')
+except Exception as e:
+    raise ImportError(f"clickhouse_driver 导入失败: {e}")
 
 
 class ClickhouseClient:
@@ -197,13 +199,21 @@ class ClickhouseClient:
 
 
 if __name__ == "__main__":
+    import os
+
+    DATABASES_CK1_DB_HOST = os.environ.get("DATABASES_CK1_DB_HOST", "")
+    DATABASES_CK1_DB_USER = os.environ.get("DATABASES_CK1_DB_USER", "")
+    DATABASES_CK1_DB_PASSWD = os.environ.get("DATABASES_CK1_DB_PASSWD", "")
+    DATABASES_CK1_DB_DB = os.environ.get("DATABASES_CK1_DB_DB", "")
+    DATABASES_CK1_DB_PORT = os.environ.get("DATABASES_CK1_DB_PORT", 9000)
+
     # 创建连接池客户端
     ck_client = ClickhouseClient(
-        host="127.0.0.1",
-        user="default",
-        passwd="",
-        db="default",
-        port=9000,
+        host=DATABASES_CK1_DB_HOST,
+        user=DATABASES_CK1_DB_USER,
+        passwd=DATABASES_CK1_DB_PASSWD,
+        db=DATABASES_CK1_DB_DB,
+        port=int(DATABASES_CK1_DB_PORT),
     )
 
     # 查询单条记录
@@ -228,7 +238,3 @@ if __name__ == "__main__":
     for row in ck_client.fetch_iter("SELECT * FROM system.tables LIMIT 10"):
         count += 1
     print("fetch_iter:", count)
-
-    # 兼容旧版 API
-    results = ck_client.query(sql)
-    print("query count:", len(results))

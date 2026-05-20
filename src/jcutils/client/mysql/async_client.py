@@ -12,8 +12,10 @@ from typing import Any, AsyncGenerator, Dict, List, Optional, Sequence, Tuple, U
 try:
     import aiomysql
     from aiomysql import Pool
-except ImportError:
+except ModuleNotFoundError:
     raise ImportError('请先安装：pip install jcutils[mysql] or uv add "jcutils[mysql]"')
+except Exception as e:
+    raise ImportError(f"aiomysql 导入失败: {e}")
 
 
 class AsyncMySQLClient:

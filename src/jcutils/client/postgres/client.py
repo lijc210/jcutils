@@ -9,8 +9,13 @@ Desc: PostgreSQL 连接池客户端，内部使用 with 上下文管理器自动
 
 from typing import Any, Dict, Generator, Optional, Sequence, Tuple, Union
 
-from psycopg.rows import dict_row, tuple_row
-from psycopg_pool import ConnectionPool
+try:
+    from psycopg.rows import dict_row, tuple_row
+    from psycopg_pool import ConnectionPool
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install jcutils[postgresql] or uv add "jcutils[postgresql]"')
+except Exception as e:
+    raise ImportError(f"psycopg 导入失败: {e}")
 
 
 class PostgresClient:

@@ -7,8 +7,13 @@ Desc: kafka-python 工具类
 
 from datetime import datetime
 
-from kafka import KafkaAdminClient, KafkaConsumer, KafkaProducer, TopicPartition
-from kafka.errors import KafkaError
+try:
+    from kafka import KafkaAdminClient, KafkaConsumer, KafkaProducer, TopicPartition
+    from kafka.errors import KafkaError
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install jcutils[kafka] or uv add "jcutils[kafka]"')
+except Exception as e:
+    raise ImportError(f"kafka 导入失败: {e}")
 
 
 class KafkaClient:

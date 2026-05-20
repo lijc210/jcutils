@@ -6,8 +6,10 @@ try:
     import boto3
     from boto3.s3.transfer import TransferConfig
     from botocore.exceptions import ClientError
-except ImportError:
-    raise ImportError("请先安装：pip install boto3 or uv add boto3")
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install boto3 or uv add "boto3"')
+except Exception as e:
+    raise ImportError(f"boto3 导入失败: {e}")
 
 
 class S3Bucket:

@@ -4,8 +4,10 @@ import requests
 
 try:
     from qiniu import Auth, BucketManager, put_file_v2
-except ImportError:
-    raise ImportError("请先安装：pip install qiniu or uv add qiniu")
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install qiniu or uv add "qiniu"')
+except Exception as e:
+    raise ImportError(f"qiniu 导入失败: {e}")
 
 
 class QiniuClient:

@@ -10,7 +10,12 @@
 import logging
 from typing import Any, Dict, Generator, List, Optional, Union, cast
 
-from ldap3 import ALL, ALL_ATTRIBUTES, SUBTREE, Connection, Server
+try:
+    from ldap3 import ALL, ALL_ATTRIBUTES, SUBTREE, Connection, Server
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install ldap3 or uv add "ldap3"')
+except Exception as e:
+    raise ImportError(f"ldap3 导入失败: {e}")
 
 
 class LdapClient:

@@ -8,12 +8,17 @@ MongoDB 连接客户端，支持单机、副本集、分片集群
 
 from typing import Any, Dict, Generator, List, Optional, Union
 
-import pymongo
-from bson import Timestamp
-from pymongo import MongoClient as PyMongoClient
-from pymongo.collection import Collection
-from pymongo.cursor import Cursor
-from pymongo.database import Database
+try:
+    import pymongo
+    from bson import Timestamp
+    from pymongo import MongoClient as PyMongoClient
+    from pymongo.collection import Collection
+    from pymongo.cursor import Cursor
+    from pymongo.database import Database
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install pymongo or uv add "pymongo"')
+except Exception as e:
+    raise ImportError(f"pymongo 导入失败: {e}")
 
 
 class MongoClient:

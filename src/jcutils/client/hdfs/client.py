@@ -5,8 +5,13 @@ Desc: 功能描述。
 pip install hdfs
 """
 
-from hdfs.client import InsecureClient
-from retry import retry
+try:
+    from hdfs.client import InsecureClient
+    from retry import retry
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install jcutils[hdfs,sentry] or uv add "jcutils[hdfs,sentry]"')
+except Exception as e:
+    raise ImportError(f"hdfs 依赖导入失败: {e}")
 
 
 class HdfsClient:

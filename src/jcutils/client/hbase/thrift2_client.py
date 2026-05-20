@@ -6,8 +6,10 @@ Desc: 功能描述。。thrift2解决thrift1不能并发访问的问题，并且
 
 try:
     import easybase
-except ImportError:
+except ModuleNotFoundError:
     raise ImportError("请先安装：pip install easybase or uv add easybase")
+except Exception as e:
+    raise ImportError(f"easybase 导入失败: {e}")
 
 
 class HbaseThrift2Client:
