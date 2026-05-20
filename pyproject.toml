@@ -53,6 +53,7 @@ postgresql = [
 # brew install openssl
 pymssql = [
     "pymssql",
+    "DBUtils>=3.0.2",
 ]
 
 

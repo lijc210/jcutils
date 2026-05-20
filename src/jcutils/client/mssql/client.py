@@ -3,7 +3,7 @@
 @Time    :   2021/01/23 18:41:53
 @Author  :   lijc210@163.com
 @Desc    :
-Microsoft SQL Server 连接客户端，内部使用 with 上下文管理器自动管理连接
+Microsoft SQL Server 连接池客户端，内部使用 with 上下文管理器自动管理连接
 支持普通查询和流式查询
 """
 
@@ -15,6 +15,13 @@ except ModuleNotFoundError:
     raise ImportError('请先安装：pip install jcutils[pymssql] or uv add "jcutils[pymssql]"')
 except Exception as e:
     raise ImportError(f"pymssql 导入失败: {e}")
+
+try:
+    from dbutils.pooled_db import PooledDB  # type: ignore
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install "jcutils[mssql]" or uv add "jcutils[mssql]"')
+except Exception as e:
+    raise ImportError(f"DBUtils 导入失败: {e}")
 
 
 class MsSqlClient:
@@ -29,9 +36,14 @@ class MsSqlClient:
         cursorclass: str = "dict",
         autocommit: bool = True,
         timeout: Optional[int] = None,
+        mincached: int = 2,
+        maxcached: int = 5,
+        maxconnections: int = 10,
+        blocking: bool = True,
+        ping: int = 1,
     ) -> None:
         """
-        SQL Server 连接客户端
+        SQL Server 连接池客户端
 
         :param host: 主机地址
         :param user: 用户名
@@ -42,6 +54,11 @@ class MsSqlClient:
         :param cursorclass: 游标类型，dict/普通
         :param autocommit: 是否自动提交，默认 True
         :param timeout: 查询超时时间（秒）
+        :param mincached: 连接池初始空闲连接数
+        :param maxcached: 连接池最大空闲连接数
+        :param maxconnections: 连接池最大连接数
+        :param blocking: 连接池满时是否阻塞等待
+        :param ping: 检查连接的频率，0=不检查，1=每次使用前检查
         """
         self.host = host
         self.user = user
@@ -53,25 +70,50 @@ class MsSqlClient:
         self.autocommit = autocommit
         self.timeout = timeout
 
+        # 连接池配置参数
+        self.mincached = mincached
+        self.maxcached = maxcached
+        self.maxconnections = maxconnections
+        self.blocking = blocking
+        self.ping = ping
+
+        # 连接池对象（懒加载，首次使用时创建）
+        self._pool: Optional[PooledDB] = None
+
+    def _get_or_create_pool(self) -> PooledDB:
+        """获取或创建连接池（懒加载）"""
+        if self._pool is None:
+            conn_params: Dict[str, Any] = {
+                "host": self.host,
+                "user": self.user,
+                "password": self.passwd,
+                "database": self.db,
+                "charset": self.charset,
+                "port": self.port,
+                "autocommit": self.autocommit,
+            }
+            if self.timeout is not None:
+                conn_params["timeout"] = self.timeout
+
+            self._pool = PooledDB(
+                creator=pymssql,
+                mincached=self.mincached,
+                maxcached=self.maxcached,
+                maxconnections=self.maxconnections,
+                blocking=self.blocking,
+                ping=self.ping,
+                **conn_params,
+            )
+        return self._pool
+
     def get_connection(self) -> Any:
         """
-        获取一个数据库连接
+        从连接池获取一个数据库连接
 
         :return: 连接对象
         """
-        conn_params = {
-            "host": self.host,
-            "user": self.user,
-            "password": self.passwd,
-            "database": self.db,
-            "charset": self.charset,
-            "port": self.port,
-            "autocommit": self.autocommit,
-        }
-        if self.timeout is not None:
-            conn_params["timeout"] = self.timeout
-        conn = pymssql.connect(**conn_params)
-        return conn
+        pool = self._get_or_create_pool()
+        return pool.connection()
 
     def get_cursor(self, conn: Any) -> Any:
         """
@@ -243,6 +285,7 @@ class MsSqlClient:
 
 
 if __name__ == "__main__":
+    # 创建连接池客户端（此时不会创建任何连接池）
     mssql_client = MsSqlClient(
         host="xx.xx.xx.xx",
         user="xxxxx",
@@ -251,12 +294,12 @@ if __name__ == "__main__":
         port=1433,
     )
 
-    # 查询单条记录
+    # 首次查询时创建连接池
     sql = "SELECT TOP 1 * FROM dbo.table_name"
     result = mssql_client.fetchone(sql)
     print("fetchone:", result)
 
-    # 分批获取数据
+    # 复用连接池连接
     total_count = 0
     for batch in mssql_client.fetchmany("SELECT TOP 25 * FROM dbo.table_name", batch_size=5):
         print("当前批次数量:", len(batch))
