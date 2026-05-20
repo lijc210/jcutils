@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     # 仅供 IDE 静态分析，运行时不执行
     from .clickhouse.client import ClickhouseClient
+    from .clickhouse.jdbc_client import ClickhouseConnectClient
     from .dataworks.client import DataworksClient
     from .elasticsearch.client import EsClient, EsClient6
     from .email.client import ImaplibClient
@@ -56,6 +57,7 @@ def _lazy_import(module_path, class_names):
 
 
 (ClickhouseClient,) = _lazy_import(".clickhouse.client", ["ClickhouseClient"])
+(ClickhouseConnectClient,) = _lazy_import(".clickhouse.jdbc_client", ["ClickhouseConnectClient"])
 (DataworksClient,) = _lazy_import(".dataworks.client", ["DataworksClient"])
 (EsClient, EsClient6) = _lazy_import(".elasticsearch.client", ["EsClient", "EsClient6"])
 (ImaplibClient,) = _lazy_import(".email.client", ["ImaplibClient"])
