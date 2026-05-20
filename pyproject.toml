@@ -135,8 +135,15 @@ allow-direct-references = true
 url = "https://pypi.org/simple"
 
 [[tool.uv.index]]
-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+# url = "https://pypi.org/simple"
+# url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+# url = "https://mirrors.aliyun.com/pypi/simple"
+url = "https://mirrors.cloud.tencent.com/pypi/simple"
+# url = "https://mirrors.huaweicloud.com/repository/pypi/simple"
+# url = "https://pypi.mirrors.ustc.edu.cn/simple"
+# url = "https://pypi.douban.com/simple"
 default = true
+
 
 [tool.uv.pip]
 # index-url = "https://pypi.org/simple"
