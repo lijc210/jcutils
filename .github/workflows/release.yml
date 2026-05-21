@@ -1,7 +1,8 @@
 name: 🚀 发布到 PyPI
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*"
 
 jobs:
   build:
@@ -21,6 +22,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 获取完整历史，用于生成 changelog
       - uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
@@ -34,12 +37,43 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # 获取上一个 tag
+          PREV_TAG=$(git tag --sort=-version:refname | sed -n '2p')
+          CURR_TAG=${{ github.ref_name }}
+          echo "prev_tag=$PREV_TAG" >> $GITHUB_OUTPUT
+
+          if [ -z "$PREV_TAG" ]; then
+            # 没有上一个 tag，取所有 commit
+            LOG=$(git log --pretty=format:"- %s (%h)" $CURR_TAG)
+          else
+            LOG=$(git log --pretty=format:"- %s (%h)" $PREV_TAG..$CURR_TAG)
+          fi
+
+          # 写入文件，避免特殊字符问题
+          echo "$LOG" > changelog.txt
+          cat changelog.txt
+
       - uses: actions/download-artifact@v4
         with:
           pattern: wheels-*
           merge-multiple: true
           path: dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: changelog.txt # 用文件内容作为 release 描述
+          files: dist/*
+
       - uses: PyO3/maturin-action@v1
         with:
           command: upload
