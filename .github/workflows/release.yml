@@ -20,8 +20,8 @@ jobs:
           echo "tag=v$VERSION" >> $GITHUB_OUTPUT
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "v$VERSION" -m "Release v$VERSION"
-          git push origin "v$VERSION"
+          git tag -a "v$VERSION" -m "Release v$VERSION" || echo "tag already exists, skipping"
+          git push origin "v$VERSION" || echo "tag already pushed, skipping"
 
   build:
     needs: tag
