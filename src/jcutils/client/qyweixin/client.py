@@ -59,14 +59,16 @@ class QyWeixinClient(object):
             )
             response_json = response.json()
             # print response_json
+            access_token = response_json.get("access_token")
+            if response_json.get("errcode") != 0:
+                raise Exception(response_json)
 
-            token = response_json["access_token"]
             with open(TOKEN_PATH, "w") as f:
-                f.write(token)
+                f.write(access_token)
         else:
             with open(TOKEN_PATH, "r") as f:
-                token = f.read()
-        return token
+                access_token = f.read()
+        return access_token
 
     def send(self, text=None, agentid="", touser="", toparty=""):
         try:
@@ -127,4 +129,10 @@ class QyWeixinClient(object):
 
 
 if __name__ == "__main__":
-    pass
+    import os
+
+    corp_id = os.environ["QYWEIXIN_CORP_ID"] = ""
+    secret = os.environ["QYWEIXIN_SECRET"] = ""
+    qyweixin_client = QyWeixinClient(corp_id, secret)
+
+    qyweixin_client.send(text="测试消息")
