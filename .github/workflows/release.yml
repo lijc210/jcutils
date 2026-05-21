@@ -4,28 +4,7 @@ on:
     types: [published]
 
 jobs:
-  tag:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    outputs:
-      version: ${{ steps.version.outputs.version }}
-      tag: ${{ steps.version.outputs.tag }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Get version and push tag
-        id: version
-        run: |
-          VERSION=$(grep '^version' pyproject.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag -a "v$VERSION" -m "Release v$VERSION" || echo "tag already exists, skipping"
-          git push origin "v$VERSION" || echo "tag already pushed, skipping"
-
   build:
-    needs: tag
     strategy:
       matrix:
         include:
