@@ -285,34 +285,42 @@ class MsSqlClient:
 
 
 if __name__ == "__main__":
+    import os
+
+    DATABASES_MSSQL_DB_HOST = os.environ.get("DATABASES_MSSQL_DB_HOST", "")
+    DATABASES_MSSQL_DB_USER = os.environ.get("DATABASES_MSSQL_DB_USER", "")
+    DATABASES_MSSQL_DB_PASSWD = os.environ.get("DATABASES_MSSQL_DB_PASSWD", "")
+    DATABASES_MSSQL_DB_DB = os.environ.get("DATABASES_MSSQL_DB_DB", "")
+    DATABASES_MSSQL_DB_PORT = os.environ.get("DATABASES_MSSQL_DB_PORT", 1433)
+
     # 创建连接池客户端（此时不会创建任何连接池）
     mssql_client = MsSqlClient(
-        host="xx.xx.xx.xx",
-        user="xxxxx",
-        passwd="your_password",
-        db="AIS20201114183546",
-        port=1433,
+        host=DATABASES_MSSQL_DB_HOST,
+        user=DATABASES_MSSQL_DB_USER,
+        passwd=DATABASES_MSSQL_DB_PASSWD,
+        db=DATABASES_MSSQL_DB_DB,
+        port=int(DATABASES_MSSQL_DB_PORT),
     )
 
-    # 首次查询时创建连接池
-    sql = "SELECT TOP 1 * FROM dbo.table_name"
+    # fetchone
+    sql = "select top 10 * from dbo.t_pur_requisition"
     result = mssql_client.fetchone(sql)
     print("fetchone:", result)
 
-    # 复用连接池连接
+    # fetchmany
     total_count = 0
-    for batch in mssql_client.fetchmany("SELECT TOP 25 * FROM dbo.table_name", batch_size=5):
+    for batch in mssql_client.fetchmany("select top 10 * from dbo.t_pur_requisition", batch_size=5):
         print("当前批次数量:", len(batch))
         total_count += len(batch)
     print("fetchmany total:", total_count)
 
     # 查询所有记录
-    sql = "SELECT TOP 10 * FROM dbo.table_name"
+    sql = "select top 10 * from dbo.t_pur_requisition"
     results = mssql_client.fetchall(sql)
     print("fetchall count:", len(results))
 
     # 流式查询
     count = 0
-    for row in mssql_client.fetch_iter("SELECT TOP 10 * FROM dbo.table_name"):
+    for row in mssql_client.fetch_iter("select top 10 * from dbo.t_pur_requisition"):
         count += 1
     print("fetch_iter:", count)

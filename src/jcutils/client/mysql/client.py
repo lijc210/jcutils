@@ -295,23 +295,6 @@ class MySqlClient:
 
 
 if __name__ == "__main__":
-    from pydantic import BaseModel
-
-    class TestConnectionConfig(BaseModel):
-        host: str
-        user: str
-        passwd: str
-        db: str
-        port: int
-
-    mysql_config = TestConnectionConfig(
-        host="10.10.11.244",
-        user="biuser",
-        passwd="@biuser123",
-        db="userdata",
-        port=3309,
-    )
-
     # 创建连接池客户端（此时不会创建任何连接池）
     mysql_client = MySqlClient(
         host="10.10.11.244",
