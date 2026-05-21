@@ -41,6 +41,9 @@ mysql = [
 # postgres相关
 # psycopg在macOS M 芯片的依赖
 # brew install libpq
+# yum install postgresql-devel
+# dnf install libpq-devel
+# apt-get install libpq-dev
 postgresql = [
     "psycopg[pool]",
     "asyncpg>=0.30.0",
