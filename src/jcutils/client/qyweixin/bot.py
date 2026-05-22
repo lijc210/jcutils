@@ -37,7 +37,6 @@ class QyWeixinBot:
 
         :param res: requests 响应对象
         :param mentioned_list: @提醒列表
-        :param key: 机器人 Webhook Key（用于错误时的回退消息）
         :return: 响应 JSON
         """
         result = res.json()
@@ -60,19 +59,18 @@ class QyWeixinBot:
 
         return result
 
-    def send_markdown(self, content: str, key: str, mentioned_list=None, msgtype: str = "markdown"):
+    def send_markdown(self, content: str, mentioned_list=None, msgtype: str = "markdown"):
         """
         发送 Markdown 消息
 
         :param content: Markdown 内容
-        :param key: 机器人 Webhook Key
         :param mentioned_list: @提醒列表
         :param msgtype: 消息类型，可选 markdown 或 post
         :return: 响应 JSON
         """
         if mentioned_list is None:
             mentioned_list = []
-        webhook_url = f"{self.base_url}/cgi-bin/webhook/send?key={key}"
+        webhook_url = f"{self.base_url}/cgi-bin/webhook/send?key={self.webhook_key}"
         data = {
             "msgtype": msgtype,
             msgtype: {
@@ -88,7 +86,6 @@ class QyWeixinBot:
         发送文本消息
 
         :param content: 文本内容
-        :param key: 机器人 Webhook Key
         :param mentioned_list: @提醒列表，默认为空
         :return: 响应 JSON
         """
@@ -112,7 +109,6 @@ class QyWeixinBot:
 
         :param md5: 图片的 MD5 值
         :param base64_data: 图片的 Base64 编码数据
-        :param key: 机器人 Webhook Key
         :return: 响应 JSON
         """
         webhook_url = f"{self.base_url}/cgi-bin/webhook/send?key={self.webhook_key}"
@@ -127,7 +123,6 @@ class QyWeixinBot:
 
         :param file_name: 文件名
         :param data: 文件二进制数据
-        :param key: 机器人 Webhook Key
         :return: 响应 JSON（包含 media_id）
         """
         url = f"{self.base_url}/cgi-bin/webhook/upload_media?key={self.webhook_key}&type=file"
@@ -135,15 +130,14 @@ class QyWeixinBot:
         return self._handle_response(res)
 
     @retry(tries=2, delay=60)
-    def send_file(self, media_id: str, key: str):
+    def send_file(self, media_id: str):
         """
         发送文件消息（需先调用 upload_media 获取 media_id）
 
         :param media_id: 素材 ID（由 upload_media 返回）
-        :param key: 机器人 Webhook Key
         :return: 响应 JSON
         """
-        webhook_url = f"{self.base_url}/cgi-bin/webhook/send?key={key}"
+        webhook_url = f"{self.base_url}/cgi-bin/webhook/send?key={self.webhook_key}"
         data = {"msgtype": "file", "file": {"media_id": media_id}}
         res = requests.post(webhook_url, json=data, headers={"Content-Type": "application/json"})
         return self._handle_response(res)

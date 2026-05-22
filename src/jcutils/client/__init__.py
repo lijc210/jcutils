@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from .clickhouse.client import ClickhouseClient
     from .clickhouse.jdbc_client import ClickhouseConnectClient
     from .dataworks.client import DataworksClient
+    from .dingtalk.bot import DingTalkBot
     from .elasticsearch.client import EsClient, EsClient6
     from .email.client import ImaplibClient
     from .ftp.client import FtpClient
@@ -78,6 +79,7 @@ def _lazy_import(module_path, class_names):
 (PostgresClient,) = _lazy_import(".postgres.client", ["PostgresClient"])
 (PrestoClient,) = _lazy_import(".presto.client", ["PrestoClient"])
 (QiniuClient,) = _lazy_import(".qiniu.client", ["QiniuClient"])
+(DingTalkBot,) = _lazy_import(".dingtalk.bot", ["DingTalkBot"])
 (QyWeixinBot,) = _lazy_import(".qyweixin.bot", ["QyWeixinBot"])
 (QyWeixinClient,) = _lazy_import(".qyweixin.client", ["QyWeixinClient"])
 (AsyncRedisClient,) = _lazy_import(".redis.async_client", ["AsyncRedisClient"])
@@ -95,6 +97,7 @@ __all__ = [
     "RedisClient",
     "ClickhouseClient",
     "DataworksClient",
+    "DingTalkBot",
     "EsClient",
     "EsClient6",
     "ImaplibClient",
