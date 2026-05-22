@@ -163,14 +163,16 @@ class QyWeixinBot:
 
 
 if __name__ == "__main__":
-    bot = QyWeixinBot()
-    key = "your_webhook_key_here"
+    import os
 
-    # # 发送文本消息
-    # content = """
-    # 你好，这是一条测试消息
-    # """
-    # bot.send_text(content, key, ["@all"])
+    bot = QyWeixinBot()
+    key = os.getenv("QYWEIXIN_WEBHOOK_KEY")
+
+    # 发送文本消息
+    content = """
+    你好，这是一条测试消息
+    """
+    bot.send_text(content, key, ["@all"])
 
     # # 发送 Markdown 消息
     # content = """
@@ -181,7 +183,7 @@ if __name__ == "__main__":
     # """
     # bot.send_markdown(content, key, ["@all"])
 
-    # 发送图片
-    file_path = "data/test.png"
-    md5, base64_data = bot.encode_image(file_path)
-    bot.send_img(md5, base64_data, key)
+    # # 发送图片
+    # file_path = "data/test.png"
+    # md5, base64_data = bot.encode_image(file_path)
+    # bot.send_img(md5, base64_data, key)
