@@ -9,8 +9,12 @@ from __future__ import annotations
 import asyncio
 import importlib
 import importlib.util
+import json
 import os
 import sys
+import tempfile
+import time
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from dotenv import dotenv_values, load_dotenv
@@ -20,7 +24,6 @@ from .platform_ import is_mac, is_windows
 if TYPE_CHECKING:
     from schema import AppConfig  # 只有 IDE/类型检查时才执行，运行时跳过
 
-SCHEMA_PATH = os.path.join(os.getcwd(), "schema.py")
 
 # 先加载 .env（不覆盖已有环境变量）
 load_dotenv(override=False)
@@ -30,6 +33,70 @@ class ConfigLoader:
     """配置加载器"""
 
     _config_dict = {}
+    SCHEMA_PATH = os.path.join(os.getcwd(), "schema.py")
+    CACHE_TTL = 300  # 秒，5分钟
+
+    @staticmethod
+    def _get_cache_file(source: str) -> Path:
+        """按配置源返回对应的缓存文件路径"""
+        return Path(tempfile.gettempdir()) / f"jcutils_config_cache_{source}.json"
+
+    @classmethod
+    def _save_cache(cls, config: dict, cache_file: Path) -> None:
+        """将配置写入系统临时目录缓存"""
+        try:
+            cache_file.write_text(json.dumps(config, ensure_ascii=False), encoding="utf-8")
+            print(f"[config] 缓存已写入: {cache_file}")
+        except Exception as e:
+            print(f"[config] 缓存写入失败（忽略）: {e}")
+
+    @classmethod
+    def _load_cache(cls, cache_file: Path) -> dict | None:
+        """读取本地缓存，过期或不存在返回 None"""
+        try:
+            if cache_file.exists():
+                age = time.time() - cache_file.stat().st_mtime
+                if age < cls.CACHE_TTL:
+                    print(f"[config] 使用本地缓存（{int(age)}s 前，TTL={cls.CACHE_TTL}s）: {cache_file}")
+                    return json.loads(cache_file.read_text(encoding="utf-8"))
+                print(f"[config] 缓存已过期（{int(age)}s > {cls.CACHE_TTL}s），重新拉取")
+        except Exception as e:
+            print(f"[config] 读取缓存失败（忽略）: {e}")
+        return None
+
+    @classmethod
+    def _load_remote_with_fallback(cls, loader_func, source: str) -> dict:
+        """
+        优先读本地缓存（TTL 内），
+        缓存过期则拉取远程并更新缓存，
+        远程失败则降级使用过期缓存，
+        无缓存才真正抛异常。
+        """
+        cache_file = cls._get_cache_file(source)  # 统一在这里获取一次
+
+        # 1. 缓存有效，直接返回
+        cached = cls._load_cache(cache_file)
+        if cached is not None:
+            return cached
+
+        # 2. 尝试拉取远程
+        try:
+            config = loader_func()
+            cls._save_cache(config, cache_file)
+            return config
+        except Exception as e:
+            print(f"[config] 远程拉取失败: {e}")
+
+        # 3. 降级：使用过期缓存
+        try:
+            if cache_file.exists():
+                print(f"[config] 降级使用过期缓存: {cache_file}")
+                return json.loads(cache_file.read_text(encoding="utf-8"))
+        except Exception as e2:
+            print(f"[config] 读取过期缓存也失败: {e2}")
+
+        # 4. 无任何缓存，真正报错
+        raise RuntimeError("远程配置拉取失败，且无本地缓存可用，请检查配置中心连接")
 
     @staticmethod
     def _merge_with_env(source_config: dict) -> dict:
@@ -315,6 +382,8 @@ class ConfigLoader:
 
     @staticmethod
     def _infer_type(value: str) -> str:
+        if not value:  # 加上空值保护
+            return "str"
         if value.lower() in ("true", "false"):
             return "bool"
         try:
@@ -368,7 +437,7 @@ class ConfigLoader:
         if "schema" in sys.modules:
             module = importlib.reload(sys.modules["schema"])
         else:
-            spec = importlib.util.spec_from_file_location("schema", SCHEMA_PATH)
+            spec = importlib.util.spec_from_file_location("schema", cls.SCHEMA_PATH)
             assert spec is not None and spec.loader is not None
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
@@ -380,19 +449,19 @@ class ConfigLoader:
         """判断 schema.py 是否存在或发生变化，按需生成，返回最新的 AppConfig 类"""
         new_content = cls._build_schema_content(cls._config_dict)
 
-        if os.path.exists(SCHEMA_PATH):
-            with open(SCHEMA_PATH, "r", encoding="utf-8") as f:
+        if os.path.exists(cls.SCHEMA_PATH):
+            with open(cls.SCHEMA_PATH, "r", encoding="utf-8") as f:
                 existing_content = f.read()
             if existing_content == new_content:
                 print("[config] schema.py 无变化，跳过生成")
             else:
                 print("[config] schema.py 已变化，更新生成")
-                with open(SCHEMA_PATH, "w", encoding="utf-8") as f:
+                with open(cls.SCHEMA_PATH, "w", encoding="utf-8") as f:
                     f.write(new_content)
                 print(f"[config] schema.py 更新完成，共 {len(cls._config_dict)} 个配置项")
         else:
             print("[config] schema.py 不存在，生成中")
-            with open(SCHEMA_PATH, "w", encoding="utf-8") as f:
+            with open(cls.SCHEMA_PATH, "w", encoding="utf-8") as f:
                 f.write(new_content)
             print(f"[config] schema.py 生成完成，共 {len(cls._config_dict)} 个配置项")
 
@@ -419,14 +488,15 @@ class ConfigLoader:
         """
         CONFIG_SOURCE = os.getenv("CONFIG_SOURCE", "local").lower()
 
+        # local 模式不需要缓存（本地 .env 读取极快）
         if CONFIG_SOURCE == "nacos":
-            config_dict = cls._load_from_nacos()
+            config_dict = cls._load_remote_with_fallback(cls._load_from_nacos, CONFIG_SOURCE)
         elif CONFIG_SOURCE == "apollo":
-            config_dict = cls._load_from_apollo()
+            config_dict = cls._load_remote_with_fallback(cls._load_from_apollo, CONFIG_SOURCE)
         elif CONFIG_SOURCE == "consul":
-            config_dict = cls._load_from_consul()
+            config_dict = cls._load_remote_with_fallback(cls._load_from_consul, CONFIG_SOURCE)
         elif CONFIG_SOURCE == "etcd":
-            config_dict = cls._load_from_etcd()
+            config_dict = cls._load_remote_with_fallback(cls._load_from_etcd, CONFIG_SOURCE)
         else:
             config_dict = cls._load_from_local()
 

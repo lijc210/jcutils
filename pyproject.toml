@@ -159,6 +159,9 @@ dev = ["requests>=2.32.3"]
 python-install-mirror = "https://ghfast.top/https://github.com/indygreg/python-build-standalone/releases/download"
 index-strategy = "unsafe-best-match" # uv 会在所有索引里找最高版本，而不是找到就停
 
+[tool.ty.environment]
+extra-paths = ["src"]
+
 [tool.maturin]
 module-name = "jcutils._core"
 python-packages = ["jcutils"]
