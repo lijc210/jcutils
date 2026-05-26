@@ -1,6 +1,6 @@
 [project]
 name = "jcutils"
-version = "0.7.8"
+version = "0.7.9"
 description = "python utils"
 authors = [{ name = "lijc210", email = "lijc210@163.com" }]
 readme = "README.md"
