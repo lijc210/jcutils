@@ -9,8 +9,12 @@ from __future__ import annotations
 import asyncio
 import importlib
 import importlib.util
+import json
 import os
 import sys
+import tempfile
+import time
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from dotenv import dotenv_values, load_dotenv
@@ -20,7 +24,6 @@ from .platform_ import is_mac, is_windows
 if TYPE_CHECKING:
     from schema import AppConfig  # 只有 IDE/类型检查时才执行，运行时跳过
 
-SCHEMA_PATH = os.path.join(os.getcwd(), "schema.py")
 
 # 先加载 .env（不覆盖已有环境变量）
 load_dotenv(override=False)
@@ -30,6 +33,70 @@ class ConfigLoader:
     """配置加载器"""
 
     _config_dict = {}
+    SCHEMA_PATH = os.path.join(os.getcwd(), "schema.py")
+    CACHE_TTL = 300  # 秒，5分钟
+
+    @staticmethod
+    def _get_cache_file(source: str) -> Path:
+        """按配置源返回对应的缓存文件路径"""
+        return Path(tempfile.gettempdir()) / f"jcutils_config_cache_{source}.json"
+
+    @classmethod
+    def _save_cache(cls, config: dict, cache_file: Path) -> None:
+        """将配置写入系统临时目录缓存"""
+        try:
+            cache_file.write_text(json.dumps(config, ensure_ascii=False), encoding="utf-8")
+            print(f"[config] 缓存已写入: {cache_file}")
+        except Exception as e:
+            print(f"[config] 缓存写入失败（忽略）: {e}")
+
+    @classmethod
+    def _load_cache(cls, cache_file: Path) -> dict | None:
+        """读取本地缓存，过期或不存在返回 None"""
+        try:
+            if cache_file.exists():
+                age = time.time() - cache_file.stat().st_mtime
+                if age < cls.CACHE_TTL:
+                    print(f"[config] 使用本地缓存（{int(age)}s 前，TTL={cls.CACHE_TTL}s）: {cache_file}")
+                    return json.loads(cache_file.read_text(encoding="utf-8"))
+                print(f"[config] 缓存已过期（{int(age)}s > {cls.CACHE_TTL}s），重新拉取")
+        except Exception as e:
+            print(f"[config] 读取缓存失败（忽略）: {e}")
+        return None
+
+    @classmethod
+    def _load_remote_with_fallback(cls, loader_func, source: str) -> dict:
+        """
+        优先读本地缓存（TTL 内），
+        缓存过期则拉取远程并更新缓存，
+        远程失败则降级使用过期缓存，
+        无缓存才真正抛异常。
+        """
+        cache_file = cls._get_cache_file(source)  # 统一在这里获取一次
+
+        # 1. 缓存有效，直接返回
+        cached = cls._load_cache(cache_file)
+        if cached is not None:
+            return cached
+
+        # 2. 尝试拉取远程
+        try:
+            config = loader_func()
+            cls._save_cache(config, cache_file)
+            return config
+        except Exception as e:
+            print(f"[config] 远程拉取失败: {e}")
+
+        # 3. 降级：使用过期缓存
+        try:
+            if cache_file.exists():
+                print(f"[config] 降级使用过期缓存: {cache_file}")
+                return json.loads(cache_file.read_text(encoding="utf-8"))
+        except Exception as e2:
+            print(f"[config] 读取过期缓存也失败: {e2}")
+
+        # 4. 无任何缓存，真正报错
+        raise RuntimeError("远程配置拉取失败，且无本地缓存可用，请检查配置中心连接")
 
     @staticmethod
     def _merge_with_env(source_config: dict) -> dict:
@@ -41,10 +108,16 @@ class ConfigLoader:
         """从 Nacos 拉取配置，合并环境变量（环境变量优先级更高）"""
         from ..utils.nacos_client import NacosClient
 
+        APP_ID = os.getenv("APP_ID", default="")
+        ENV = os.getenv("ENV", "dev").lower()
+        if not APP_ID:
+            raise ValueError("APP_ID 未设置")
+        if not ENV:
+            raise ValueError("ENV 未设置")
+
         NACOS_SERVER = os.getenv("NACOS_SERVER", default="")
-        NACOS_NAMESPACE = os.getenv("NACOS_NAMESPACE") or os.getenv("ENV", default="dev").lower()
+        NACOS_NAMESPACE = os.getenv("NACOS_NAMESPACE", "").lower() or ENV
         NACOS_GROUP = os.getenv("NACOS_GROUP", default="")
-        NACOS_DATA_ID = os.getenv("NACOS_DATA_ID", default="")
         NACOS_USERNAME = os.getenv("NACOS_USERNAME", default="")
         NACOS_PASSWORD = os.getenv("NACOS_PASSWORD", default="")
 
@@ -52,16 +125,16 @@ class ConfigLoader:
             not NACOS_SERVER
             or not NACOS_NAMESPACE
             or not NACOS_GROUP
-            or not NACOS_DATA_ID
+            or not APP_ID
             or not NACOS_USERNAME
             or not NACOS_PASSWORD
         ):
             raise ValueError(
-                "使用 Nacos 时必须配置 NACOS_SERVER、NACOS_NAMESPACE、NACOS_GROUP、NACOS_DATA_ID、NACOS_USERNAME 和 NACOS_PASSWORD"
+                "使用 Nacos 时必须配置 NACOS_SERVER、NACOS_NAMESPACE、NACOS_GROUP、APP_ID、NACOS_USERNAME 和 NACOS_PASSWORD"
             )
 
         print(f"[config] 从 Nacos 加载配置: {NACOS_SERVER}")
-        print(f"[config] NACOS_NAMESPACE: {NACOS_NAMESPACE}，NACOS_DATA_ID: {NACOS_DATA_ID}")
+        print(f"[config] ENV: {ENV}，APP_ID: {APP_ID}")
 
         nacos_client = NacosClient(
             server=NACOS_SERVER, namespace=NACOS_NAMESPACE, username=NACOS_USERNAME, password=NACOS_PASSWORD
@@ -69,13 +142,13 @@ class ConfigLoader:
 
         async def _fetch():
             async with nacos_client:
-                return await nacos_client.get_dict(NACOS_DATA_ID, NACOS_GROUP)
+                return await nacos_client.get_dict(APP_ID, NACOS_GROUP)
 
         nacos_config = asyncio.run(_fetch())
         if not nacos_config:
-            raise Exception(f"Nacos 配置拉取失败: DATA_ID={NACOS_DATA_ID}, GROUP={NACOS_GROUP}")
+            raise Exception(f"Nacos 配置拉取失败: DATA_ID={APP_ID}, GROUP={NACOS_GROUP}")
 
-        nacos_config["APP_NAME"] = NACOS_DATA_ID
+        nacos_config["APP_ID"] = APP_ID
         nacos_config["ENV"] = NACOS_NAMESPACE
 
         return cls._merge_with_env(nacos_config)
@@ -85,27 +158,31 @@ class ConfigLoader:
         """从 Apollo 拉取所有命名空间配置，合并环境变量（环境变量优先级更高）"""
         from pyapollo.client import ApolloClient  # type: ignore
 
+        APP_ID = os.getenv("APP_ID", default="")
+        ENV = os.getenv("ENV", "DEV").lower()
+        if not APP_ID:
+            raise ValueError("APP_ID 未设置")
+        if not ENV:
+            raise ValueError("ENV 未设置")
+
         APOLLO_META_SERVER_ADDRESS = os.getenv("APOLLO_META_SERVER_ADDRESS", default="")
-        APOLLO_APP_ID = os.getenv("APOLLO_APP_ID", default="")
         APOLLO_APP_SECRET = os.getenv("APOLLO_APP_SECRET", default="")
         APOLLO_CLUSTER = os.getenv("APOLLO_CLUSTER", default="default")
-        APOLLO_ENV = os.getenv("ENV", "DEV")
+
         APOLLO_NAMESPACES = os.getenv("APOLLO_NAMESPACES", "application").split(",")
 
         if not APOLLO_META_SERVER_ADDRESS:
             raise ValueError("APOLLO_META_SERVER_ADDRESS 未配置")
-        if not APOLLO_APP_ID:
-            raise ValueError("使用 Apollo 时必须配置 APOLLO_APP_ID")
 
         print(f"[config] 从 Apollo 加载配置: {APOLLO_META_SERVER_ADDRESS}")
-        print(f"[config] APOLLO_APP_ID: {APOLLO_APP_ID}，APOLLO_ENV: {APOLLO_ENV}")
+        print(f"[config] ENV: {ENV}，APP_ID: {APP_ID}")
 
         client = ApolloClient(
             meta_server_address=APOLLO_META_SERVER_ADDRESS,
-            app_id=APOLLO_APP_ID,
+            app_id=APP_ID,
             app_secret=APOLLO_APP_SECRET,
             cluster=APOLLO_CLUSTER,
-            env=APOLLO_ENV,
+            env=ENV,
             namespaces=APOLLO_NAMESPACES,
         )
 
@@ -116,10 +193,10 @@ class ConfigLoader:
                 apollo_config[k] = str(v) if isinstance(v, dict) else v
 
         if not apollo_config:
-            raise Exception(f"Apollo 配置为空: APP_ID={APOLLO_APP_ID}, NAMESPACES={APOLLO_NAMESPACES}")
+            raise Exception(f"Apollo 配置为空: APP_ID={APP_ID}, NAMESPACES={APOLLO_NAMESPACES}")
 
-        apollo_config["APP_NAME"] = APOLLO_APP_ID
-        apollo_config["ENV"] = APOLLO_ENV
+        apollo_config["APP_ID"] = APP_ID
+        apollo_config["ENV"] = ENV
 
         return cls._merge_with_env(apollo_config)
 
@@ -131,7 +208,7 @@ class ConfigLoader:
 
         KV 路径约定（两种方式二选一）：
           1. 显式指定前缀：CONSUL_PREFIX=myapp/prod/
-          2. 自动拼接：{CONSUL_APP_ID}/{CONSUL_ENV}/  →  例如 myapp/dev/
+          2. 自动拼接：{APP_ID}/{ENV}/  →  例如 myapp/dev/
 
         KV 结构示例：
           myapp/dev/DB_HOST        → "127.0.0.1"
@@ -142,19 +219,21 @@ class ConfigLoader:
 
         import httpx
 
+        APP_ID = os.getenv("APP_ID", default="")
+        ENV = os.getenv("ENV", default="dev").lower()
+        if not APP_ID:
+            raise ValueError("APP_ID 未配置")
+        if not ENV:
+            raise ValueError("ENV 未配置")
+
         CONSUL_SCHEME = os.getenv("CONSUL_SCHEME", default="http")
         CONSUL_HOST = os.getenv("CONSUL_HOST", default="127.0.0.1")
         CONSUL_PORT = int(os.getenv("CONSUL_PORT", default="8500"))
         CONSUL_TOKEN = os.getenv("CONSUL_TOKEN", default="")
         CONSUL_PREFIX = os.getenv("CONSUL_PREFIX", default="")
-        CONSUL_APP_ID = os.getenv("CONSUL_APP_ID", default="")
-        CONSUL_ENV = os.getenv("ENV", default="dev").lower()
-
-        if not CONSUL_PREFIX and not CONSUL_APP_ID:
-            raise ValueError("使用 Consul 时必须配置 CONSUL_PREFIX 或 CONSUL_APP_ID（作为 KV 路径前缀）")
 
         # 优先用 CONSUL_PREFIX，否则自动拼接 {APP_ID}/{ENV}/
-        kv_prefix = CONSUL_PREFIX or f"{CONSUL_APP_ID}/{CONSUL_ENV}"
+        kv_prefix = CONSUL_PREFIX or f"{APP_ID}/{ENV}"
 
         print(f"[config] 从 Consul 加载配置: {CONSUL_HOST}:{CONSUL_PORT}")
         print(f"[config] KV prefix: {kv_prefix}")
@@ -194,8 +273,8 @@ class ConfigLoader:
         if not consul_config:
             raise Exception(f"Consul 配置拉取后为空: prefix={kv_prefix}")
 
-        consul_config["APP_NAME"] = CONSUL_APP_ID or kv_prefix.strip("/").split("/")[0]
-        consul_config["ENV"] = CONSUL_ENV
+        consul_config["APP_ID"] = APP_ID or kv_prefix.strip("/").split("/")[0]
+        consul_config["ENV"] = ENV
 
         return cls._merge_with_env(consul_config)
 
@@ -205,7 +284,7 @@ class ConfigLoader:
 
         KV 路径约定（两种方式二选一）：
         1. 显式指定前缀：ETCD_PREFIX=myapp/prod/
-        2. 自动拼接：{ETCD_APP_ID}/{ETCD_ENV}/  →  例如 myapp/dev/
+        2. 自动拼接：{APP_ID}/{ENV}/  →  例如 myapp/dev/
 
         KV 结构示例：
         myapp/dev/DB_HOST  → "127.0.0.1"
@@ -221,19 +300,23 @@ class ConfigLoader:
 
         import httpx  # type: ignore  pip install httpx
 
+        APP_ID = os.getenv("APP_ID", default="")
+        ENV = os.getenv("ENV", default="dev").lower()
+
+        if not APP_ID:
+            raise ValueError("APP_ID 未配置")
+
+        if not ENV:
+            raise ValueError("ENV 未配置")
+
         ETCD_SCHEME = os.getenv("ETCD_SCHEME", default="http")
         ETCD_HOST = os.getenv("ETCD_HOST", default="127.0.0.1")
         ETCD_PORT = int(os.getenv("ETCD_PORT", default="2379"))
         ETCD_PREFIX = os.getenv("ETCD_PREFIX", default="")
-        ETCD_APP_ID = os.getenv("ETCD_APP_ID", default="")
-        ETCD_ENV = os.getenv("ENV", default="dev").lower()
         ETCD_USER = os.getenv("ETCD_USER", default="")
         ETCD_PASSWORD = os.getenv("ETCD_PASSWORD", default="")
 
-        if not ETCD_PREFIX and not ETCD_APP_ID:
-            raise ValueError("使用 etcd 时必须配置 ETCD_PREFIX 或 ETCD_APP_ID")
-
-        kv_prefix = ETCD_PREFIX or f"{ETCD_APP_ID}/{ETCD_ENV}"
+        kv_prefix = ETCD_PREFIX or f"{APP_ID}/{ENV}"
         # if not kv_prefix.endswith("/"):
         #     kv_prefix += "/"
 
@@ -297,24 +380,34 @@ class ConfigLoader:
         if not result:
             raise Exception(f"etcd 配置解析后为空: prefix={kv_prefix}")
 
-        result["APP_NAME"] = ETCD_APP_ID or kv_prefix.strip("/").split("/")[0]
-        result["ENV"] = ETCD_ENV
+        result["APP_ID"] = APP_ID or kv_prefix.strip("/").split("/")[0]
+        result["ENV"] = ENV
 
         return cls._merge_with_env(result)
 
     @classmethod
     def _load_from_local(cls) -> dict:
         """从 .env 读取配置，合并环境变量"""
-        print("[config] 从 .env 加载配置")
+
+        APP_ID = os.getenv("APP_ID", default="")
         ENV = os.getenv("ENV", default="dev").lower()
-        APP_NAME = os.getenv("APP_NAME", default="")
+        if not APP_ID:
+            raise ValueError("APP_ID 未设置")
+        if not ENV:
+            raise ValueError("ENV 未设置")
+
+        print("[config] 从 .env 加载配置")
+        print(f"[config] ENV: {ENV}，APP_ID: {APP_ID}")
+
         local_config = dict(dotenv_values(".env"))
-        local_config["APP_NAME"] = APP_NAME
+        local_config["APP_ID"] = APP_ID
         local_config["ENV"] = ENV
         return cls._merge_with_env(local_config)
 
     @staticmethod
     def _infer_type(value: str) -> str:
+        if not value:  # 加上空值保护
+            return "str"
         if value.lower() in ("true", "false"):
             return "bool"
         try:
@@ -368,7 +461,7 @@ class ConfigLoader:
         if "schema" in sys.modules:
             module = importlib.reload(sys.modules["schema"])
         else:
-            spec = importlib.util.spec_from_file_location("schema", SCHEMA_PATH)
+            spec = importlib.util.spec_from_file_location("schema", cls.SCHEMA_PATH)
             assert spec is not None and spec.loader is not None
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
@@ -380,34 +473,34 @@ class ConfigLoader:
         """判断 schema.py 是否存在或发生变化，按需生成，返回最新的 AppConfig 类"""
         new_content = cls._build_schema_content(cls._config_dict)
 
-        if os.path.exists(SCHEMA_PATH):
-            with open(SCHEMA_PATH, "r", encoding="utf-8") as f:
+        if os.path.exists(cls.SCHEMA_PATH):
+            with open(cls.SCHEMA_PATH, "r", encoding="utf-8") as f:
                 existing_content = f.read()
             if existing_content == new_content:
                 print("[config] schema.py 无变化，跳过生成")
             else:
                 print("[config] schema.py 已变化，更新生成")
-                with open(SCHEMA_PATH, "w", encoding="utf-8") as f:
+                with open(cls.SCHEMA_PATH, "w", encoding="utf-8") as f:
                     f.write(new_content)
                 print(f"[config] schema.py 更新完成，共 {len(cls._config_dict)} 个配置项")
         else:
             print("[config] schema.py 不存在，生成中")
-            with open(SCHEMA_PATH, "w", encoding="utf-8") as f:
+            with open(cls.SCHEMA_PATH, "w", encoding="utf-8") as f:
                 f.write(new_content)
             print(f"[config] schema.py 生成完成，共 {len(cls._config_dict)} 个配置项")
 
         return cls._load_schema_module()
 
     @classmethod
-    def _get_dirs(cls, app_name: str) -> tuple[str, str]:
+    def _get_dirs(cls, APP_ID: str) -> tuple[str, str]:
         if is_windows():
             drive = "D:\\" if os.path.exists("D:\\") else "C:\\"
-            return os.path.join(drive, "data", app_name), os.path.join(drive, "logs", app_name)
+            return os.path.join(drive, "data", APP_ID), os.path.join(drive, "logs", APP_ID)
         elif is_mac():
             home = os.path.expanduser("~")
-            return os.path.join(home, "data", app_name), os.path.join(home, "logs", app_name)
+            return os.path.join(home, "data", APP_ID), os.path.join(home, "logs", APP_ID)
         else:
-            return os.path.join("/data", app_name), os.path.join("/logs", app_name)
+            return os.path.join("/data", APP_ID), os.path.join("/logs", APP_ID)
 
     @classmethod
     def load_config(cls, init_dirs: bool = False) -> AppConfig:
@@ -419,14 +512,15 @@ class ConfigLoader:
         """
         CONFIG_SOURCE = os.getenv("CONFIG_SOURCE", "local").lower()
 
+        # local 模式不需要缓存（本地 .env 读取极快）
         if CONFIG_SOURCE == "nacos":
-            config_dict = cls._load_from_nacos()
+            config_dict = cls._load_remote_with_fallback(cls._load_from_nacos, CONFIG_SOURCE)
         elif CONFIG_SOURCE == "apollo":
-            config_dict = cls._load_from_apollo()
+            config_dict = cls._load_remote_with_fallback(cls._load_from_apollo, CONFIG_SOURCE)
         elif CONFIG_SOURCE == "consul":
-            config_dict = cls._load_from_consul()
+            config_dict = cls._load_remote_with_fallback(cls._load_from_consul, CONFIG_SOURCE)
         elif CONFIG_SOURCE == "etcd":
-            config_dict = cls._load_from_etcd()
+            config_dict = cls._load_remote_with_fallback(cls._load_from_etcd, CONFIG_SOURCE)
         else:
             config_dict = cls._load_from_local()
 
@@ -434,8 +528,8 @@ class ConfigLoader:
 
         if init_dirs:
             # 按需创建目录
-            app_name = config_dict.get("APP_NAME", "")
-            data_dir, logs_dir = cls._get_dirs(app_name)
+            APP_ID = config_dict.get("APP_ID", "")
+            data_dir, logs_dir = cls._get_dirs(APP_ID)
             for d in [data_dir, logs_dir]:
                 os.makedirs(d, exist_ok=True)
             # 注入到 config_dict，schema 会自动生成这两个字段

@@ -1323,14 +1323,13 @@ wheels = [
 
 [[package]]
 name = "jcutils"
-version = "0.7.4"
+version = "0.7.8"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
     { name = "python-dateutil" },
     { name = "python-dotenv" },
-    { name = "qiniu" },
     { name = "requests", version = "2.32.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "requests", version = "2.34.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
 ]
@@ -1413,6 +1412,7 @@ postgresql = [
     { name = "psycopg", version = "3.3.4", source = { registry = "https://pypi.org/simple" }, extra = ["pool"], marker = "python_full_version >= '3.10'" },
 ]
 pymssql = [
+    { name = "dbutils" },
     { name = "pymssql" },
 ]
 redis = [
@@ -1439,6 +1439,7 @@ requires-dist = [
     { name = "clickhouse-driver", marker = "extra == 'clickhouse'" },
     { name = "dbutils", marker = "extra == 'mysql'", specifier = ">=3.0.2" },
     { name = "dbutils", marker = "extra == 'postgresql'", specifier = ">=3.0.2" },
+    { name = "dbutils", marker = "extra == 'pymssql'", specifier = ">=3.0.2" },
     { name = "elasticsearch", marker = "extra == 'elasticsearch'", specifier = ">=8.10.0" },
     { name = "esdk-obs-python", marker = "extra == 'huaweicloud'", specifier = ">=3.23.9.1" },
     { name = "httpx" },
@@ -1459,7 +1460,6 @@ requires-dist = [
     { name = "pyodps", marker = "python_full_version < '3.9' and extra == 'alibabacloud'", specifier = ">=0.11.6.1" },
     { name = "python-dateutil" },
     { name = "python-dotenv" },
-    { name = "qiniu", specifier = ">=7.17.0" },
     { name = "redis", marker = "extra == 'redis'", specifier = ">=3.5.3" },
     { name = "requests" },
     { name = "retry", marker = "extra == 'sentry'", specifier = ">=0.9.2" },
@@ -2740,19 +2740,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/82/72/04fcad41ca56491995076630c3ec1e834be241664c0c09a64c9a2589b507/PyYAML-6.0.2-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:a9f8c2e67970f13b16084e04f134610fd1d374bf477b17ec1599185cf611d725", size = 723577, upload-time = "2024-08-06T20:33:39.389Z" },
     { url = "https://files.pythonhosted.org/packages/ed/5e/46168b1f2757f1fcd442bc3029cd8767d88a98c9c05770d8b420948743bb/PyYAML-6.0.2-cp39-cp39-win32.whl", hash = "sha256:6395c297d42274772abc367baaa79683958044e5d3835486c16da75d2a694631", size = 144593, upload-time = "2024-08-06T20:33:46.63Z" },
     { url = "https://files.pythonhosted.org/packages/19/87/5124b1c1f2412bb95c59ec481eaf936cd32f0fe2a7b16b97b81c4c017a6a/PyYAML-6.0.2-cp39-cp39-win_amd64.whl", hash = "sha256:39693e1f8320ae4f43943590b49779ffb98acb81f788220ea932a6b6c51004d8", size = 162312, upload-time = "2024-08-06T20:33:49.073Z" },
-]
-
-[[package]]
-name = "qiniu"
-version = "7.17.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "requests", version = "2.32.5", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
-    { name = "requests", version = "2.34.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/f8/bd/b4c669df1ee2a6dbaf23b14796d72445545bf9a913dff93c37eb79ee08b0/qiniu-7.17.0.tar.gz", hash = "sha256:4bcc61b6d53fa0416edd49f9e6290fb5e6bdf4056537936be1a6d48cd020f9fb", size = 62486, upload-time = "2025-07-11T07:32:43.364Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/49/1d/bd3703fe3c1c2efc1eff9314a9d2f5dd276ecb78d303634942756e231b0c/qiniu-7.17.0-py3-none-any.whl", hash = "sha256:3cd3d25ba1fb9abd2eefb98d5669873d7199e9d84decb25ff5db7968a08a9fb9", size = 81769, upload-time = "2025-07-11T07:32:41.665Z" },
 ]
 
 [[package]]

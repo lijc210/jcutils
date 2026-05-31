@@ -4,11 +4,11 @@ main:
         # 引用密钥仓库中的特定文件
         - https://cnb.cool/lijc210/secret/-/blob/main/env.prod.yml
       stages:
-        - name: 读取版本号并打tag
-          script: |
-            VERSION=$(grep '^version' pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
-            echo "版本号: $VERSION"
-            git tag "v$VERSION"
+        # - name: 读取版本号并打tag
+        #   script: |
+        #     VERSION=$(grep '^version' pyproject.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+        #     echo "版本号: $VERSION"
+        #     git tag "v$VERSION"
 
         - name: 同步到github
           image: tencentcom/git-sync

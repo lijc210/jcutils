@@ -1,6 +1,6 @@
 [project]
 name = "jcutils"
-version = "0.7.5"
+version = "0.7.9"
 description = "python utils"
 authors = [{ name = "lijc210", email = "lijc210@163.com" }]
 readme = "README.md"
@@ -41,6 +41,9 @@ mysql = [
 # postgres相关
 # psycopg在macOS M 芯片的依赖
 # brew install libpq
+# yum install postgresql-devel
+# dnf install libpq-devel
+# apt-get install libpq-dev
 postgresql = [
     "psycopg[pool]",
     "asyncpg>=0.30.0",
@@ -155,6 +158,9 @@ dev = ["requests>=2.32.3"]
 [tool.uv]
 python-install-mirror = "https://ghfast.top/https://github.com/indygreg/python-build-standalone/releases/download"
 index-strategy = "unsafe-best-match" # uv 会在所有索引里找最高版本，而不是找到就停
+
+[tool.ty.environment]
+extra-paths = ["src"]
 
 [tool.maturin]
 module-name = "jcutils._core"
