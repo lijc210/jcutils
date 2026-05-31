@@ -7,7 +7,7 @@ POSTGRES_TEST_HOST = os.getenv("POSTGRES_TEST_HOST", default="")
 POSTGRES_TEST_USER = os.getenv("POSTGRES_TEST_USER", default="")
 POSTGRES_TEST_PASSWD = os.getenv("POSTGRES_TEST_PASSWD", default="")
 POSTGRES_TEST_DB = os.getenv("POSTGRES_TEST_DB", default="")
-POSTGRES_TEST_PORT = os.getenv("POSTGRES_TEST_PORT", default="")
+POSTGRES_TEST_PORT = int(os.getenv("POSTGRES_TEST_PORT", default="5432"))
 
 
 # 创建连接池客户端（此时不会创建任何连接池）
