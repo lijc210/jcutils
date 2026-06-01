@@ -65,7 +65,7 @@ class QyWeixinBot:
 
         :param content: Markdown 内容
         :param mentioned_list: @提醒列表
-        :param msgtype: 消息类型，可选 markdown 或 post
+        :param msgtype: 消息类型，可选 markdown 或 markdown_v2
         :return: 响应 JSON
         """
         if mentioned_list is None:
