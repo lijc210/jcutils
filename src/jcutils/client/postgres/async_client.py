@@ -7,7 +7,10 @@ Desc: PostgreSQL 异步连接池客户端，内部使用 async with 上下文管
 使用 asyncpg 内置连接池
 """
 
+import logging
 from typing import Any, AsyncGenerator, Dict, List, Optional, Sequence, Tuple, Union
+
+logger = logging.getLogger(__name__)
 
 try:
     import asyncpg
