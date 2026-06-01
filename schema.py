@@ -202,4 +202,5 @@ class AppConfig(BaseModel):
     WECHAT_DATA_SPIDER: str
     WECHAT_PERSONAL_ALARM: str
     WECHAT_PERSONAL_NOTIFY: str
+    XXL_ACCESS_TOKEN: str
     XXL_ADMIN_BASEURL: str

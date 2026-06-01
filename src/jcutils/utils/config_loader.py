@@ -37,9 +37,9 @@ class ConfigLoader:
     CACHE_TTL = 300  # 秒，5分钟
 
     @staticmethod
-    def _get_cache_file(source: str) -> Path:
+    def _get_cache_file(source: str, app_id: str) -> Path:
         """按配置源返回对应的缓存文件路径"""
-        return Path(tempfile.gettempdir()) / f"jcutils_config_cache_{source}.json"
+        return Path(tempfile.gettempdir()) / f"{app_id}_config_cache_{source}.json"
 
     @classmethod
     def _save_cache(cls, config: dict, cache_file: Path) -> None:
@@ -65,14 +65,14 @@ class ConfigLoader:
         return None
 
     @classmethod
-    def _load_remote_with_fallback(cls, loader_func, source: str) -> dict:
+    def _load_remote_with_fallback(cls, loader_func, source: str, app_id: str) -> dict:
         """
         优先读本地缓存（TTL 内），
         缓存过期则拉取远程并更新缓存，
         远程失败则降级使用过期缓存，
         无缓存才真正抛异常。
         """
-        cache_file = cls._get_cache_file(source)  # 统一在这里获取一次
+        cache_file = cls._get_cache_file(source, app_id)  # 统一在这里获取一次
 
         # 1. 缓存有效，直接返回
         cached = cls._load_cache(cache_file)
@@ -511,16 +511,19 @@ class ConfigLoader:
         - local（默认）→ 从 .env 读取，再合并环境变量
         """
         CONFIG_SOURCE = os.getenv("CONFIG_SOURCE", "local").lower()
+        APP_ID = os.getenv("APP_ID", "")
+        if not APP_ID:
+            raise ValueError("APP_ID 未设置")
 
         # local 模式不需要缓存（本地 .env 读取极快）
         if CONFIG_SOURCE == "nacos":
-            config_dict = cls._load_remote_with_fallback(cls._load_from_nacos, CONFIG_SOURCE)
+            config_dict = cls._load_remote_with_fallback(cls._load_from_nacos, CONFIG_SOURCE, APP_ID)
         elif CONFIG_SOURCE == "apollo":
-            config_dict = cls._load_remote_with_fallback(cls._load_from_apollo, CONFIG_SOURCE)
+            config_dict = cls._load_remote_with_fallback(cls._load_from_apollo, CONFIG_SOURCE, APP_ID)
         elif CONFIG_SOURCE == "consul":
-            config_dict = cls._load_remote_with_fallback(cls._load_from_consul, CONFIG_SOURCE)
+            config_dict = cls._load_remote_with_fallback(cls._load_from_consul, CONFIG_SOURCE, APP_ID)
         elif CONFIG_SOURCE == "etcd":
-            config_dict = cls._load_remote_with_fallback(cls._load_from_etcd, CONFIG_SOURCE)
+            config_dict = cls._load_remote_with_fallback(cls._load_from_etcd, CONFIG_SOURCE, APP_ID)
         else:
             config_dict = cls._load_from_local()
 
