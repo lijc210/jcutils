@@ -495,12 +495,12 @@ class ConfigLoader:
     def _get_dirs(cls, APP_ID: str) -> tuple[str, str]:
         if is_windows():
             drive = "D:\\" if os.path.exists("D:\\") else "C:\\"
-            return os.path.join(drive, "data", APP_ID), os.path.join(drive, "logs", APP_ID)
+            return os.path.join(drive, "data", APP_ID), os.path.join(drive, "data", "logs", APP_ID)
         elif is_mac():
             home = os.path.expanduser("~")
-            return os.path.join(home, "data", APP_ID), os.path.join(home, "logs", APP_ID)
+            return os.path.join(home, "data", APP_ID), os.path.join(home, "data", "logs", APP_ID)
         else:
-            return os.path.join("/data", APP_ID), os.path.join("/logs", APP_ID)
+            return os.path.join("/data", APP_ID), os.path.join("/data/logs", APP_ID)
 
     @classmethod
     def load_config(cls, init_dirs: bool = False) -> AppConfig:

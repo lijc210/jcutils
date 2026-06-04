@@ -7,7 +7,7 @@ Desc: python下远程查询hive
 try:
     from pyhive import hive
 except ModuleNotFoundError:
-    raise ImportError('请先安装：pip install pyhive or uv add "pyhive"')
+    raise ImportError('请先安装：pip install pyhive thrift thrift_sasl or uv add "pyhive pyhive thrift thrift_sasl"')
 except Exception as e:
     raise ImportError(f"pyhive 导入失败: {e}")
 
