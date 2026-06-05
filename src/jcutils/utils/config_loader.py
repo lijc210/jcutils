@@ -500,7 +500,7 @@ class ConfigLoader:
             home = os.path.expanduser("~")
             return os.path.join(home, "data", APP_ID), os.path.join(home, "data", "logs", APP_ID)
         else:
-            return os.path.join("/data", APP_ID), os.path.join("/data/logs", APP_ID)
+            return os.path.join("/data", APP_ID, "data"), os.path.join("/data/logs", APP_ID)
 
     @classmethod
     def load_config(cls, init_dirs: bool = False) -> AppConfig:
