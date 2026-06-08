@@ -138,28 +138,35 @@ class ClickhouseClient:
                 cursor.close()
 
     def fetch_iter(
-        self, sql: str, batch_size: int = 1000, args: Optional[Union[Tuple[Any, ...], Dict[str, Any]]] = None
+        self, sql: str, args: Optional[Union[Tuple[Any, ...], Dict[str, Any]]] = None
     ) -> Generator[Any, None, None]:
         """
-        流式查询，需要返回大数量时使用
+        流式查询，使用原生 execute_iter 按 block 流式推送，不会将全量数据加载到内存。
         逐批获取数据，避免内存溢出
         :param sql: SQL 语句
-        :param batch_size: 每批获取的记录数，默认 1000
         :param args: 参数化查询的参数，元组或字典类型
         :return: 生成器，可以迭代获取每条记录
         """
         with self.get_connection() as conn:
-            cursor = self.get_cursor(conn)
+            # 原生 Client 对象
+            native_client = conn._make_client()
+            query_iter = native_client.execute_iter(
+                sql,
+                params=args or {},
+                with_column_types=True,
+            )
+            # 第一个元素固定是列元数据 [(col_name, col_type), ...]
             try:
-                cursor.execute(sql, args)
-                while True:
-                    results = cursor.fetchmany(batch_size)
-                    if not results:
-                        break
-                    for row in results:
-                        yield row
-            finally:
-                cursor.close()
+                columns_with_types = next(query_iter)
+                column_names = [col[0] for col in columns_with_types]
+            except StopIteration:
+                return
+
+            for row in query_iter:
+                if self.cursorclass == "dict":
+                    yield dict(zip(column_names, row))
+                else:
+                    yield row
 
     def execute(self, sql: str, args: Optional[Union[Tuple[Any, ...], Dict[str, Any]]] = None) -> int:
         """
