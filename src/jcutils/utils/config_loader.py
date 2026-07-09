@@ -19,8 +19,6 @@ from typing import TYPE_CHECKING
 
 from dotenv import dotenv_values, load_dotenv
 
-from .platform_ import is_mac, is_windows
-
 if TYPE_CHECKING:
     from schema import AppConfig  # 只有 IDE/类型检查时才执行，运行时跳过
 
@@ -493,14 +491,44 @@ class ConfigLoader:
 
     @classmethod
     def _get_dirs(cls, APP_ID: str) -> tuple[str, str]:
-        if is_windows():
+        """
+        获取应用数据和日志目录
+        优先使用环境变量，生产环境用 /data，开发环境自动适配
+        """
+
+        # 1. 环境变量优先（最高优先级）
+        data_dir = os.environ.get(f"{APP_ID.upper()}_DATA_DIR")
+        log_dir = os.environ.get(f"{APP_ID.upper()}_LOG_DIR")
+        if data_dir and log_dir:
+            os.makedirs(data_dir, exist_ok=True)
+            os.makedirs(log_dir, exist_ok=True)
+            return data_dir, log_dir
+
+        # 2. 检查是否在 Docker 容器中
+        in_docker = os.path.exists("/.dockerenv")
+
+        # 3. 根据环境选择
+        if in_docker or sys.platform.startswith("linux"):
+            # 生产环境或 Linux 服务器：使用 /data
+            base = f"/data/{APP_ID}"
+        elif sys.platform == "darwin":
+            # Mac 开发：使用 ~/data
+            base = os.path.join(os.path.expanduser("~"), "data", APP_ID)
+        elif sys.platform == "win32":
+            # Windows 开发：使用 D:\data 或 C:\data
             drive = "D:\\" if os.path.exists("D:\\") else "C:\\"
-            return os.path.join(drive, "data", APP_ID), os.path.join(drive, "data", "logs", APP_ID)
-        elif is_mac():
-            home = os.path.expanduser("~")
-            return os.path.join(home, "data", APP_ID), os.path.join(home, "data", "logs", APP_ID)
+            base = os.path.join(drive, "data", APP_ID)
         else:
-            return os.path.join("/data", APP_ID, "data"), os.path.join("/data/logs", APP_ID)
+            # 其他：fallback
+            base = os.path.join("/var", "lib", APP_ID)
+
+        data_dir = os.path.join(base, "data")
+        log_dir = os.path.join(base, "logs")
+
+        os.makedirs(data_dir, exist_ok=True)
+        os.makedirs(log_dir, exist_ok=True)
+
+        return data_dir, log_dir
 
     @classmethod
     def load_config(cls, init_dirs: bool = False) -> AppConfig:
