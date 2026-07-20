@@ -494,42 +494,55 @@ class ConfigLoader:
         """
         获取应用数据和日志目录
         优先使用环境变量，生产环境用 /data，开发环境自动适配
+        
+        Returns:
+            tuple[str, str]: (data_dir, log_dir)
         """
-
+        import os
+        import sys
+    
         # 1. 环境变量优先（最高优先级）
-        data_dir = os.environ.get(f"{APP_ID.upper()}_DATA_DIR")
-        log_dir = os.environ.get(f"{APP_ID.upper()}_LOG_DIR")
-        if data_dir and log_dir:
-            os.makedirs(data_dir, exist_ok=True)
-            os.makedirs(log_dir, exist_ok=True)
-            return data_dir, log_dir
-
+        data_dir_env = os.environ.get(f"{APP_ID.upper()}_DATA_DIR")
+        log_dir_env = os.environ.get(f"{APP_ID.upper()}_LOG_DIR")
+        
+        if data_dir_env and log_dir_env:
+            os.makedirs(data_dir_env, exist_ok=True)
+            os.makedirs(log_dir_env, exist_ok=True)
+            return data_dir_env, log_dir_env
+    
         # 2. 检查是否在 Docker 容器中
         in_docker = os.path.exists("/.dockerenv")
-
-        # 3. 根据环境选择
+    
+        # 3. 根据环境选择基础路径
         if in_docker or sys.platform.startswith("linux"):
-            # 生产环境或 Linux 服务器：使用 /data
-            base = f"/data/{APP_ID}"
+            # 生产环境或 Linux 服务器
+            # 数据：/data/{APP_ID}/data
+            # 日志：/data/logs/{APP_ID}
+            data_dir = f"/data/{APP_ID}/data"
+            log_dir = f"/data/logs/{APP_ID}"
+            
         elif sys.platform == "darwin":
             # Mac 开发：使用 ~/data
             base = os.path.join(os.path.expanduser("~"), "data", APP_ID)
+            data_dir = os.path.join(base, "data")
+            log_dir = os.path.join(os.path.expanduser("~"), "data", "logs", APP_ID)
+            
         elif sys.platform == "win32":
             # Windows 开发：使用 D:\data 或 C:\data
             drive = "D:\\" if os.path.exists("D:\\") else "C:\\"
-            base = os.path.join(drive, "data", APP_ID)
+            data_dir = os.path.join(drive, APP_ID, "data")
+            log_dir = os.path.join(drive, "logs", APP_ID)
         else:
             # 其他：fallback
-            base = os.path.join("/var", "lib", APP_ID)
-
-        data_dir = os.path.join(base, "data")
-        log_dir = os.path.join(base, "logs")
-
+            data_dir = os.path.join("/var", "lib", APP_ID, "data")
+            log_dir = os.path.join("/var", "log", APP_ID)
+    
+        # 确保目录存在
         os.makedirs(data_dir, exist_ok=True)
         os.makedirs(log_dir, exist_ok=True)
-
+    
         return data_dir, log_dir
-
+        
     @classmethod
     def load_config(cls, init_dirs: bool = False) -> AppConfig:
         """
