@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     from .dingtalk.bot import DingTalkBot
     from .elasticsearch.client import EsClient, EsClient6
     from .email.client import ImaplibClient
+    from .etcd.async_client import AsyncEtcdClient
+    from .etcd.client import EtcdClient
     from .ftp.client import FtpClient
     from .hbase.client import HbaseClient
     from .hbase.thrift2_client import HbaseThrift2Client
@@ -29,6 +31,7 @@ if TYPE_CHECKING:
     from .mssql.client import MsSqlClient
     from .mysql.async_client import AsyncMySQLClient
     from .mysql.client import MySqlClient
+    from .nacos.client import NacosClient
     from .odbc.client import PyodbcClient
     from .postgres.async_client import AsyncPostgresClient
     from .postgres.client import PostgresClient
@@ -87,6 +90,10 @@ def _lazy_import(module_path, class_names):
 (S3Bucket,) = _lazy_import(".s3.client", ["S3Bucket"])
 (Sqlite3Client,) = _lazy_import(".sqlite.client", ["Sqlite3Client"])
 (WeixinClient,) = _lazy_import(".weixin.client", ["WeixinClient"])
+(AsyncEtcdClient,) = _lazy_import(".etcd.async_client", ["AsyncEtcdClient"])
+(EtcdClient,) = _lazy_import(".etcd.client", ["EtcdClient"])
+(NacosClient,) = _lazy_import(".nacos.client", ["NacosClient"])
+
 
 __all__ = [
     "AsyncMySQLClient",
@@ -119,4 +126,7 @@ __all__ = [
     "QyWeixinClient",
     "QyWeixinBot",
     "WeixinClient",
+    "AsyncEtcdClient",
+    "EtcdClient",
+    "NacosClient",
 ]

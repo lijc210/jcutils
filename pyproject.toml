@@ -4,7 +4,7 @@ version = "0.8.4"
 description = "python utils"
 authors = [{ name = "lijc210", email = "lijc210@163.com" }]
 readme = "README.md"
-requires-python = ">= 3.9"
+requires-python = ">= 3.10"
 homepage = "https://github.com/lijic210/jcutils"
 repository = "https://github.com/lijic210/jcutils"
 documentation = "https://github.com/lijic210/jcutils"
@@ -21,7 +21,9 @@ dependencies = [
     "pydantic",
     "requests",
     "python-dateutil",
-    "httpx"
+    "httpx",
+    "etcd3gw>=2.5.0",
+    "aetcd>=1.0.0",
 ]
 
 [project.optional-dependencies]

@@ -104,7 +104,7 @@ class ConfigLoader:
     @classmethod
     def _load_from_nacos(cls) -> dict:
         """从 Nacos 拉取配置，合并环境变量（环境变量优先级更高）"""
-        from ..utils.nacos_client import NacosClient
+        from ..client import NacosClient
 
         APP_ID = os.getenv("APP_ID", default="")
         ENV = os.getenv("ENV", "dev").lower()
@@ -294,9 +294,7 @@ class ConfigLoader:
                 DB_HOST=127.0.0.1
                 DB_PORT=5432
         """
-        import base64
-
-        import httpx  # type: ignore  pip install httpx
+        from ..client import AsyncEtcdClient
 
         APP_ID = os.getenv("APP_ID", default="")
         ENV = os.getenv("ENV", default="dev").lower()
@@ -307,7 +305,6 @@ class ConfigLoader:
         if not ENV:
             raise ValueError("ENV 未配置")
 
-        ETCD_SCHEME = os.getenv("ETCD_SCHEME", default="http")
         ETCD_HOST = os.getenv("ETCD_HOST", default="127.0.0.1")
         ETCD_PORT = int(os.getenv("ETCD_PORT", default="2379"))
         ETCD_PREFIX = os.getenv("ETCD_PREFIX", default="")
@@ -315,50 +312,36 @@ class ConfigLoader:
         ETCD_PASSWORD = os.getenv("ETCD_PASSWORD", default="")
 
         kv_prefix = ETCD_PREFIX or f"{APP_ID}/{ENV}"
-        # if not kv_prefix.endswith("/"):
-        #     kv_prefix += "/"
 
         print(f"[config] 从 etcd 加载配置: {ETCD_HOST}:{ETCD_PORT}")
         print(f"[config] KV prefix: {kv_prefix}")
 
-        # etcd v3 gRPC-gateway 接口
-        base_url = f"{ETCD_SCHEME}://{ETCD_HOST}:{ETCD_PORT}"
-
-        key_b64 = base64.b64encode(kv_prefix.encode()).decode()
-        # range_end: 前缀查询技巧，将最后一个字节 +1
-        prefix_bytes = kv_prefix.encode()
-        range_end_bytes = prefix_bytes[:-1] + bytes([prefix_bytes[-1] + 1])
-        range_end_b64 = base64.b64encode(range_end_bytes).decode()
-
-        # 先获取 token
-        token = None
-        if ETCD_USER and ETCD_PASSWORD:
-            auth_resp = httpx.post(
-                f"{base_url}/v3/auth/authenticate",
-                json={"name": ETCD_USER, "password": ETCD_PASSWORD},
+        async def _fetch():
+            client = AsyncEtcdClient(
+                host=ETCD_HOST,
+                port=ETCD_PORT,
+                username=ETCD_USER or None,
+                password=ETCD_PASSWORD or None,
             )
-            auth_resp.raise_for_status()
-            token = auth_resp.json().get("token")
+            async with client:
+                items = await client.get_prefix(kv_prefix)
+                if not items:
+                    raise Exception(f"etcd KV 配置为空或路径不存在: prefix={kv_prefix}")
+                return items
 
-        headers = {"Authorization": token} if token else {}
-
-        resp = httpx.post(
-            f"{base_url}/v3/kv/range",
-            json={"key": key_b64, "range_end": range_end_b64},
-            headers=headers,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-
-        kvs = data.get("kvs") or []
-        if not kvs:
-            raise Exception(f"etcd KV 配置为空或路径不存在: prefix={kv_prefix}")
+        try:
+            kvs = asyncio.run(_fetch())
+        except Exception as e:
+            err_msg = str(e)
+            if "user name is empty" in err_msg or "authentication failed" in err_msg:
+                raise Exception(
+                    f"etcd 认证失败，请配置 ETCD_USER 和 ETCD_PASSWORD 环境变量。原始错误: {err_msg}"
+                ) from e
+            raise
 
         result = {}
-        for item in kvs:
-            full_key = base64.b64decode(item["key"]).decode("utf-8")
+        for full_key, value in kvs:
             relative_key = full_key[len(kv_prefix) :]
-            value = base64.b64decode(item["value"]).decode("utf-8") if item.get("value") else ""
 
             lines = value.splitlines()
             if len(lines) > 1 or (len(lines) == 1 and "=" in value):
@@ -494,25 +477,25 @@ class ConfigLoader:
         """
         获取应用数据和日志目录
         优先使用环境变量，生产环境用 /data，开发环境自动适配
-        
+
         Returns:
             tuple[str, str]: (data_dir, log_dir)
         """
         import os
         import sys
-    
+
         # 1. 环境变量优先（最高优先级）
         data_dir_env = os.environ.get(f"{APP_ID.upper()}_DATA_DIR")
         log_dir_env = os.environ.get(f"{APP_ID.upper()}_LOG_DIR")
-        
+
         if data_dir_env and log_dir_env:
             os.makedirs(data_dir_env, exist_ok=True)
             os.makedirs(log_dir_env, exist_ok=True)
             return data_dir_env, log_dir_env
-    
+
         # 2. 检查是否在 Docker 容器中
         in_docker = os.path.exists("/.dockerenv")
-    
+
         # 3. 根据环境选择基础路径
         if in_docker or sys.platform.startswith("linux"):
             # 生产环境或 Linux 服务器
@@ -520,13 +503,13 @@ class ConfigLoader:
             # 日志：/data/logs/{APP_ID}
             data_dir = f"/data/{APP_ID}/data"
             log_dir = f"/data/logs/{APP_ID}"
-            
+
         elif sys.platform == "darwin":
             # Mac 开发：使用 ~/data
             base = os.path.join(os.path.expanduser("~"), "data", APP_ID)
             data_dir = os.path.join(base, "data")
             log_dir = os.path.join(os.path.expanduser("~"), "data", "logs", APP_ID)
-            
+
         elif sys.platform == "win32":
             # Windows 开发：使用 D:\data 或 C:\data
             drive = "D:\\" if os.path.exists("D:\\") else "C:\\"
@@ -536,13 +519,13 @@ class ConfigLoader:
             # 其他：fallback
             data_dir = os.path.join("/var", "lib", APP_ID, "data")
             log_dir = os.path.join("/var", "log", APP_ID)
-    
+
         # 确保目录存在
         os.makedirs(data_dir, exist_ok=True)
         os.makedirs(log_dir, exist_ok=True)
-    
+
         return data_dir, log_dir
-        
+
     @classmethod
     def load_config(cls, init_dirs: bool = False) -> AppConfig:
         """

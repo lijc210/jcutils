@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from src.jcutils.utils.nacos_client import NacosClient
+from jcutils.client import NacosClient
 
 NACOS_SERVER = os.getenv("NACOS_SERVER", default="")
 NACOS_NAMESPACE = os.getenv("NACOS_NAMESPACE", default="")
