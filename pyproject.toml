@@ -11,6 +11,13 @@ documentation = "https://github.com/lijic210/jcutils"
 keywords = ["utils", "toolkit", "tools", "python"]
 classifiers = [
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Free Threading :: 3.13",
+    "Programming Language :: Python :: Free Threading :: 3.14",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
@@ -129,37 +136,15 @@ Source = "https://github.com/lijic210/jcutils"
 Tracker = "https://github.com/lijc210/jcutils/issues"
 
 [build-system]
-requires = ["maturin>=1.2,<2.0"]
+requires = ["maturin>=1.7,<2.0"]
 build-backend = "maturin"
 
 managed = true
 [tool.hatch.metadata]
 allow-direct-references = true
 
-[[tool.uv.index]]
-url = "https://pypi.org/simple"
-
-[[tool.uv.index]]
-# url = "https://pypi.org/simple"
-# url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-# url = "https://mirrors.aliyun.com/pypi/simple"
-url = "https://mirrors.cloud.tencent.com/pypi/simple"
-# url = "https://mirrors.huaweicloud.com/repository/pypi/simple"
-# url = "https://pypi.mirrors.ustc.edu.cn/simple"
-# url = "https://pypi.douban.com/simple"
-default = true
-
-
-[tool.uv.pip]
-# index-url = "https://pypi.org/simple"
-index-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-
 [dependency-groups]
 dev = ["requests>=2.32.3"]
-
-[tool.uv]
-python-install-mirror = "https://ghfast.top/https://github.com/indygreg/python-build-standalone/releases/download"
-index-strategy = "unsafe-best-match" # uv 会在所有索引里找最高版本，而不是找到就停
 
 [tool.ty.environment]
 extra-paths = ["src"]
