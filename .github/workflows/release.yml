@@ -38,17 +38,15 @@ jobs:
     strategy:
       matrix:
         include:
-          # Linux: manylinux 镜像已支持 free-threaded Python 3.14t，可交叉编译
+          # x86_64: 原生构建
           - os: ubuntu-latest
             target: x86_64
-          - os: ubuntu-latest
-            target: aarch64
-          # macOS: M 芯片原生构建
-          - os: macos-latest
-            target: aarch64
-          # Windows: 原生构建
           - os: windows-latest
             target: x86_64
+          # aarch64: macos-latest 是 M 芯片，原生构建
+          # Linux aarch64 需交叉编译，manylinux 镜像暂不含 free-threaded Python，后续再添加
+          - os: macos-latest
+            target: aarch64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -67,7 +65,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           args: --release --out dist -i python
-          manylinux: auto # manylinux 镜像已支持 free-threaded Python 3.14t (PEP 779)
+          manylinux: off # manylinux 镜像不含 free-threaded Python，直接使用宿主机构建
       - uses: actions/upload-artifact@v4
         with:
           name: wheels-freethreaded-${{ matrix.os }}-${{ matrix.target }}
