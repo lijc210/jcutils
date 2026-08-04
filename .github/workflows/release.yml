@@ -109,8 +109,20 @@ jobs:
         with:
           body_path: changelog.txt # 用文件内容作为 release 描述
           files: dist/*
+          prerelease: ${{ contains(github.ref_name, 'dev') }} # dev tag 标记为预发布
 
-      - uses: PyO3/maturin-action@v1
+      - name: Upload to TestPyPI (dev)
+        if: contains(github.ref_name, 'dev')
+        uses: PyO3/maturin-action@v1
+        with:
+          command: upload
+          args: --non-interactive --skip-existing --repository testpypi dist/*
+        env:
+          MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
+
+      - name: Upload to PyPI (release)
+        if: ${{ !contains(github.ref_name, 'dev') }}
+        uses: PyO3/maturin-action@v1
         with:
           command: upload
           args: --non-interactive --skip-existing dist/*
