@@ -38,17 +38,18 @@ jobs:
     strategy:
       matrix:
         include:
-          # Linux: manylinux_2_28 镜像已包含 free-threaded Python 3.14t (在 /opt/python/cp314-cp314t/)
+          # Linux x86_64: manylinux_2_28 镜像已包含 free-threaded Python 3.14t
           - os: ubuntu-latest
             target: x86_64
             manylinux: '2_28'
             interpreter: /opt/python/cp314-cp314t/bin/python3.14
             setup_python: false
-          - os: ubuntu-latest
+          # Linux aarch64: 使用 GitHub ARM 原生 runner，避免交叉编译
+          - os: ubuntu-24.04-arm
             target: aarch64
-            manylinux: '2_28'
-            interpreter: /opt/python/cp314-cp314t/bin/python3.14
-            setup_python: false
+            manylinux: off
+            interpreter: python
+            setup_python: true
           # macOS: M 芯片原生构建
           - os: macos-latest
             target: aarch64
