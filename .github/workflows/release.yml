@@ -44,12 +44,12 @@ jobs:
             manylinux: '2_28'
             interpreter: /opt/python/cp314-cp314t/bin/python3.14
             setup_python: false
-          # Linux aarch64: 使用 GitHub ARM 原生 runner，避免交叉编译
+          # Linux aarch64: GitHub ARM 原生 runner + manylinux_2_28 aarch64 容器（原生运行，无交叉编译）
           - os: ubuntu-24.04-arm
             target: aarch64
-            manylinux: off
-            interpreter: python
-            setup_python: true
+            manylinux: '2_28'
+            interpreter: /opt/python/cp314-cp314t/bin/python3.14
+            setup_python: false
           # macOS: M 芯片原生构建
           - os: macos-latest
             target: aarch64
