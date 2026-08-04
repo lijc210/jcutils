@@ -61,11 +61,10 @@ jobs:
         run: |
           python --version --version
           python -c "import sys; print('GIL enabled:', sys._is_gil_enabled())"
-          echo "PYTHON_PATH=$(which python)" >> $GITHUB_ENV
       - uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -i ${{ env.PYTHON_PATH }}
+          args: --release --out dist -i python
           manylinux: off # free-threaded Python 不在 manylinux Docker 镜像中，需直接使用宿主机构建
       - uses: actions/upload-artifact@v4
         with:
