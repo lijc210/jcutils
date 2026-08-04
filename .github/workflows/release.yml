@@ -38,34 +38,50 @@ jobs:
     strategy:
       matrix:
         include:
-          # x86_64: 原生构建
+          # Linux: manylinux_2_28 镜像已包含 free-threaded Python 3.14t (在 /opt/python/cp314-cp314t/)
           - os: ubuntu-latest
             target: x86_64
-          - os: windows-latest
-            target: x86_64
-          # aarch64: macos-latest 是 M 芯片，原生构建
-          # Linux aarch64 需交叉编译，manylinux 镜像暂不含 free-threaded Python，后续再添加
+            manylinux: '2_28'
+            interpreter: /opt/python/cp314-cp314t/bin/python3.14
+            setup_python: false
+          - os: ubuntu-latest
+            target: aarch64
+            manylinux: '2_28'
+            interpreter: /opt/python/cp314-cp314t/bin/python3.14
+            setup_python: false
+          # macOS: M 芯片原生构建
           - os: macos-latest
             target: aarch64
+            manylinux: off
+            interpreter: python
+            setup_python: true
+          # Windows: 原生构建
+          - os: windows-latest
+            target: x86_64
+            manylinux: off
+            interpreter: python
+            setup_python: true
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Set up free-threaded Python 3.14
+        if: ${{ matrix.setup_python }}
         uses: actions/setup-python@v5
         with:
           python-version: '3.14'
           freethreaded: true
       - name: Verify free-threaded Python
+        if: ${{ matrix.setup_python }}
         run: |
           python --version --version
           python -c "import sys; print('GIL enabled:', sys._is_gil_enabled())"
       - uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -i python
-          manylinux: off # manylinux 镜像不含 free-threaded Python，直接使用宿主机构建
+          args: --release --out dist -i ${{ matrix.interpreter }}
+          manylinux: ${{ matrix.manylinux }}
       - uses: actions/upload-artifact@v4
         with:
           name: wheels-freethreaded-${{ matrix.os }}-${{ matrix.target }}
