@@ -112,6 +112,9 @@ jobs:
           files: dist/*
           prerelease: ${{ contains(github.ref_name, 'dev') }} # dev tag 标记为预发布
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
       - name: Upload to TestPyPI (dev)
         if: contains(github.ref_name, 'dev')
         run: uv publish --publish-url https://test.pypi.org/legacy/ --token ${{ secrets.TEST_PYPI_TOKEN }} dist/*
