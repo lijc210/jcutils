@@ -21,3 +21,20 @@ main:
             sync_mode: push # 推送
             force: true # 强制推送
             push_tags: true
+
+dev:
+  push:
+    - imports:
+        - https://cnb.cool/lijc210/secret/-/blob/main/env.prod.yml
+      stages:
+        - name: 同步到github
+          image: tencentcom/git-sync
+          env:
+          settings:
+            target_url: https://github.com/lijc210/jcutils.git
+            auth_type: https
+            username: ${GITHUB_USER}
+            password: ${GITHUB_TOKEN}
+            sync_mode: push
+            force: true
+            push_tags: true
