@@ -38,14 +38,15 @@ jobs:
     strategy:
       matrix:
         include:
+          # x86_64: 原生构建
           - os: ubuntu-latest
             target: x86_64
-          - os: ubuntu-latest
-            target: aarch64
-          - os: macos-latest
-            target: aarch64
           - os: windows-latest
             target: x86_64
+          # aarch64: macos-latest 是 M 芯片，原生构建
+          # Linux aarch64 需要交叉编译，manylinux 镜像暂不支持 free-threaded，后续再添加
+          - os: macos-latest
+            target: aarch64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
