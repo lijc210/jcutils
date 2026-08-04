@@ -114,18 +114,8 @@ jobs:
 
       - name: Upload to TestPyPI (dev)
         if: contains(github.ref_name, 'dev')
-        uses: PyO3/maturin-action@v1
-        with:
-          command: upload
-          args: --non-interactive --skip-existing --repository=testpypi dist/*
-        env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_TOKEN }}
+        run: uv publish --publish-url https://test.pypi.org/legacy/ --token ${{ secrets.TEST_PYPI_TOKEN }} dist/*
 
       - name: Upload to PyPI (release)
         if: ${{ !contains(github.ref_name, 'dev') }}
-        uses: PyO3/maturin-action@v1
-        with:
-          command: upload
-          args: --non-interactive --skip-existing dist/*
-        env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+        run: uv publish --token ${{ secrets.PYPI_TOKEN }} dist/*
