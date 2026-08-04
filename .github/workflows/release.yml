@@ -38,24 +38,26 @@ jobs:
     strategy:
       matrix:
         include:
-          # x86_64: 原生构建
+          # Linux: manylinux 镜像已支持 free-threaded Python 3.14t，可交叉编译
           - os: ubuntu-latest
             target: x86_64
-          - os: windows-latest
-            target: x86_64
-          # aarch64: macos-latest 是 M 芯片，原生构建
-          # Linux aarch64 需要交叉编译，manylinux 镜像暂不支持 free-threaded，后续再添加
+          - os: ubuntu-latest
+            target: aarch64
+          # macOS: M 芯片原生构建
           - os: macos-latest
             target: aarch64
+          # Windows: 原生构建
+          - os: windows-latest
+            target: x86_64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Set up free-threaded Python 3.13
+      - name: Set up free-threaded Python 3.14
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.14'
           freethreaded: true
       - name: Verify free-threaded Python
         run: |
@@ -65,7 +67,7 @@ jobs:
         with:
           target: ${{ matrix.target }}
           args: --release --out dist -i python
-          manylinux: off # free-threaded Python 不在 manylinux Docker 镜像中，需直接使用宿主机构建
+          manylinux: auto # manylinux 镜像已支持 free-threaded Python 3.14t (PEP 779)
       - uses: actions/upload-artifact@v4
         with:
           name: wheels-freethreaded-${{ matrix.os }}-${{ matrix.target }}
