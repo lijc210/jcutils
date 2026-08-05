@@ -128,8 +128,8 @@ jobs:
 
       - name: Upload to TestPyPI (dev)
         if: contains(github.ref_name, 'dev')
-        run: uv publish --publish-url https://test.pypi.org/legacy/ --check-url https://pypi.org/simple/ --token ${{ secrets.TEST_PYPI_TOKEN }} dist/*
+        run: uv publish --publish-url https://test.pypi.org/legacy/ --token ${{ secrets.TEST_PYPI_TOKEN }} dist/*
 
       - name: Upload to PyPI (release)
         if: ${{ !contains(github.ref_name, 'dev') }}
-        run: uv publish --check-url https://pypi.org/simple/ --token ${{ secrets.PYPI_TOKEN }} dist/*
+        run: uv publish --token ${{ secrets.PYPI_TOKEN }} dist/*
