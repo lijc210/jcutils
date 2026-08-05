@@ -41,31 +41,42 @@ jobs:
           # abi3t 前向兼容 wheel (PEP 803)，一个 wheel 覆盖所有 free-threaded Python 3.15+
           - os: ubuntu-latest
             target: x86_64
+            manylinux: '2_28'
+            interpreter: /opt/python/cp315-cp315t/bin/python3.15
           - os: ubuntu-24.04-arm
             target: aarch64
+            manylinux: '2_28'
+            interpreter: /opt/python/cp315-cp315t/bin/python3.15
           - os: macos-latest
             target: aarch64
+            manylinux: off
+            interpreter: python
           - os: windows-latest
             target: x86_64
+            manylinux: off
+            interpreter: python
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-python@v5
+      - name: Set up free-threaded Python 3.15
+        if: ${{ matrix.manylinux == 'off' }}
+        uses: actions/setup-python@v5
         with:
           python-version: '3.15'
           freethreaded: true
           allow-prereleases: true
       - name: Verify free-threaded Python
+        if: ${{ matrix.manylinux == 'off' }}
         run: |
           python --version --version
           python -c "import sys; print('GIL enabled:', sys._is_gil_enabled())"
       - uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -i python
-          manylinux: off
+          args: --release --out dist -i ${{ matrix.interpreter }}
+          manylinux: ${{ matrix.manylinux }}
       - uses: actions/upload-artifact@v4
         with:
           name: wheels-freethreaded-${{ matrix.os }}-${{ matrix.target }}
