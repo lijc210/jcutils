@@ -12,8 +12,9 @@ crate-type = ["cdylib"]
 
 [dependencies]
 # "extension-module" tells pyo3 we want to build an extension module (skips linking against libpython.so)
-# "abi3-py310" tells pyo3 (and maturin) to build using the stable ABI with minimum Python version 3.10
-# Note: abi3 is ignored when building for free-threaded Python (3.13t+),
-# a version-specific wheel (e.g. cp313t) will be built instead.
-pyo3 = { version = "0.26", features = ["extension-module", "abi3-py310"] }
+# "abi3-py310" builds using the stable ABI with minimum Python version 3.10 (non-free-threaded)
+# "abi3t-py315" builds using the free-threaded stable ABI (PEP 803) with minimum Python version 3.15
+# When building with free-threaded Python 3.14t, abi3t falls back to version-specific (cp314-cp314t)
+# When building with free-threaded Python 3.15t+, abi3t produces forward-compatible abi3t wheels
+pyo3 = { version = "0.29", features = ["extension-module", "abi3-py310", "abi3t-py315"] }
 chrono = "0.4"

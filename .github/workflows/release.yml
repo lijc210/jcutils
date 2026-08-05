@@ -38,41 +38,73 @@ jobs:
     strategy:
       matrix:
         include:
+          # === Python 3.14t: 版本专用 wheel (cp314-cp314t) ===
           # Linux x86_64: manylinux_2_28 镜像已包含 free-threaded Python 3.14t
           - os: ubuntu-latest
             target: x86_64
             manylinux: '2_28'
             interpreter: /opt/python/cp314-cp314t/bin/python3.14
             setup_python: false
+            py_version: '3.14'
           # Linux aarch64: GitHub ARM 原生 runner + manylinux_2_28 aarch64 容器（原生运行，无交叉编译）
           - os: ubuntu-24.04-arm
             target: aarch64
             manylinux: '2_28'
             interpreter: /opt/python/cp314-cp314t/bin/python3.14
             setup_python: false
+            py_version: '3.14'
           # macOS: M 芯片原生构建
           - os: macos-latest
             target: aarch64
             manylinux: off
             interpreter: python
             setup_python: true
+            py_version: '3.14'
           # Windows: 原生构建
           - os: windows-latest
             target: x86_64
             manylinux: off
             interpreter: python
             setup_python: true
+            py_version: '3.14'
+          # === Python 3.15t: abi3t 前向兼容 wheel (PEP 803) ===
+          # 一个 abi3t wheel 覆盖所有 free-threaded Python 3.15+ 版本
+          - os: ubuntu-latest
+            target: x86_64
+            manylinux: '2_28'
+            interpreter: /opt/python/cp315-cp315t/bin/python3.15
+            setup_python: false
+            py_version: '3.15'
+          - os: ubuntu-24.04-arm
+            target: aarch64
+            manylinux: '2_28'
+            interpreter: /opt/python/cp315-cp315t/bin/python3.15
+            setup_python: false
+            py_version: '3.15'
+          - os: macos-latest
+            target: aarch64
+            manylinux: off
+            interpreter: python
+            setup_python: true
+            py_version: '3.15'
+          - os: windows-latest
+            target: x86_64
+            manylinux: off
+            interpreter: python
+            setup_python: true
+            py_version: '3.15'
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Set up free-threaded Python 3.14
+      - name: Set up free-threaded Python ${{ matrix.py_version }}
         if: ${{ matrix.setup_python }}
         uses: actions/setup-python@v5
         with:
-          python-version: '3.14'
+          python-version: ${{ matrix.py_version }}
           freethreaded: true
+          allow-prereleases: true
       - name: Verify free-threaded Python
         if: ${{ matrix.setup_python }}
         run: |
@@ -85,7 +117,7 @@ jobs:
           manylinux: ${{ matrix.manylinux }}
       - uses: actions/upload-artifact@v4
         with:
-          name: wheels-freethreaded-${{ matrix.os }}-${{ matrix.target }}
+          name: wheels-freethreaded-${{ matrix.py_version }}-${{ matrix.os }}-${{ matrix.target }}
           path: dist
 
   publish:

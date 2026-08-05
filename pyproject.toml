@@ -27,18 +27,18 @@ license = { text = "MIT License" }
 dependencies = [
     "python-dotenv",
     "pydantic",
-    "requests",
     "python-dateutil",
-    "httpx",
-    "etcd3gw>=2.5.0",
-    "aetcd>=1.0.0",
 ]
 
 [project.optional-dependencies]
-# mysql相关
+# config相关
 config = [
     "nacos-sdk-python>=2.0.11",
     "pyapollo-zenkilan>=0.2.0",
+    "etcd3gw>=2.5.0",
+    "aetcd>=1.0.0",
+    "requests",
+    "httpx"
 ]
 
 # mysql相关
