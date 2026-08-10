@@ -27,8 +27,7 @@ license = { text = "MIT License" }
 dependencies = [
     "python-dotenv",
     "pydantic",
-    "python-dateutil",
-    "retry>=0.9.2",
+    "python-dateutil"
 ]
 
 [project.optional-dependencies]
@@ -39,7 +38,8 @@ config = [
     "etcd3gw>=2.5.0",
     "aetcd>=1.0.0",
     "requests",
-    "httpx"
+    "httpx",
+    "retry>=0.9.2",
 ]
 
 # mysql相关
