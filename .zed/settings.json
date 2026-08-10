@@ -1,0 +1,8 @@
+{
+    "terminal": {
+        "env": {
+            "PYTHONPATH": ".venv/bin/python"
+        }
+        // "detect_venv": "off"
+    }
+}

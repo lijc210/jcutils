@@ -33,31 +33,79 @@ class QyWeixinBot:
 
     def _handle_response(self, res: requests.Response, mentioned_list=None):
         """
-        处理 API 响应，处理错误码并返回结果
+        处理 API 响应，errcode 非 0 时抛出异常以触发重试
 
         :param res: requests 响应对象
         :param mentioned_list: @提醒列表
         :return: 响应 JSON
+        :raises ValueError: errcode 非 0 时抛出异常
         """
         result = res.json()
         errcode = result.get("errcode")
 
-        if errcode == 45009:  # 接口调用超过限制
-            raise ValueError(result.get("errmsg", "接口调用超过限制"))
-        elif errcode != 0:
-            print("发送失败：", result)
-            # 发送错误信息作为文本消息
-            fallback_data = {
-                "msgtype": "text",
-                "text": {
-                    "content": result.get("errmsg", ""),
-                    "mentioned_list": mentioned_list or ["@all"],
-                },
-            }
-            webhook_url = f"{self.base_url}/cgi-bin/webhook/send?key={self.webhook_key}"
-            requests.post(webhook_url, json=fallback_data, headers={"Content-Type": "application/json"})
+        if errcode != 0:
+            raise ValueError(f"发送失败, errcode={errcode}, errmsg={result.get('errmsg', '')}")
 
         return result
+
+    def _send_fallback(self, content: str, mentioned_list=None):
+        """
+        重试全部失败后，向群里发送一条包含错误信息的文本消息
+
+        :param content: 错误信息内容
+        :param mentioned_list: @提醒列表
+        """
+        fallback_data = {
+            "msgtype": "text",
+            "text": {
+                "content": content,
+                "mentioned_list": mentioned_list or ["@all"],
+            },
+        }
+        webhook_url = f"{self.base_url}/cgi-bin/webhook/send?key={self.webhook_key}"
+        requests.post(webhook_url, json=fallback_data, headers={"Content-Type": "application/json"})
+
+    def _send_with_retry(self, send_once, mentioned_list=None, tries: int = 2, delay: int = 60):
+        """
+        带重试地执行发送；全部重试失败后仅发送一次兜底错误消息，再抛出异常
+
+        :param send_once: 单次发送的可调用对象（无参数）
+        :param mentioned_list: @提醒列表，用于兜底消息
+        :param tries: 总尝试次数，默认 2
+        :param delay: 重试间隔秒数，默认 60
+        :return: 响应 JSON
+        :raises Exception: 重试全部失败后重新抛出最后一个异常
+        """
+
+        @retry(tries=tries, delay=delay)
+        def _send():
+            return send_once()
+
+        try:
+            return _send()
+        except Exception as exc:
+            # 全部重试失败后，仅发送一次兜底错误消息
+            self._send_fallback(str(exc), mentioned_list)
+            raise
+
+    def _post_message(self, msgtype: str, payload: dict, mentioned_list=None, headers: Optional[dict] = None):
+        """
+        单次发送 webhook 消息（不含重试与兜底逻辑）
+
+        :param msgtype: 消息类型，如 text / markdown / image / file
+        :param payload: 对应消息类型的参数体
+        :param mentioned_list: @提醒列表
+        :param headers: 请求头，默认 application/json
+        :return: 响应 JSON
+        """
+        webhook_url = f"{self.base_url}/cgi-bin/webhook/send?key={self.webhook_key}"
+        data = {"msgtype": msgtype, msgtype: payload}
+        res = requests.post(
+            webhook_url,
+            json=data,
+            headers=headers if headers is not None else {"Content-Type": "application/json"},
+        )
+        return self._handle_response(res, mentioned_list)
 
     def send_markdown(self, content: str, mentioned_list=None, msgtype: str = "markdown"):
         """
@@ -70,17 +118,11 @@ class QyWeixinBot:
         """
         if mentioned_list is None:
             mentioned_list = []
-        webhook_url = f"{self.base_url}/cgi-bin/webhook/send?key={self.webhook_key}"
-        data = {
-            "msgtype": msgtype,
-            msgtype: {
-                "content": content,
-            },
-        }
-        res = requests.post(webhook_url, json=data, headers={"Content-Type": "application/json"})
-        return self._handle_response(res, mentioned_list)
+        return self._send_with_retry(
+            lambda: self._post_message(msgtype, {"content": content}, mentioned_list),
+            mentioned_list,
+        )
 
-    @retry(tries=2, delay=60)
     def send_text(self, content: str = "", mentioned_list=None):
         """
         发送文本消息
@@ -91,18 +133,15 @@ class QyWeixinBot:
         """
         if mentioned_list is None:
             mentioned_list = []
-        webhook_url = f"{self.base_url}/cgi-bin/webhook/send?key={self.webhook_key}"
-        data = {
-            "msgtype": "text",
-            "text": {
-                "content": content,
-                "mentioned_list": mentioned_list,
-            },
-        }
-        res = requests.post(webhook_url, json=data, headers={"Content-Type": "application/json"})
-        return self._handle_response(res, mentioned_list)
+        return self._send_with_retry(
+            lambda: self._post_message(
+                "text",
+                {"content": content, "mentioned_list": mentioned_list},
+                mentioned_list,
+            ),
+            mentioned_list,
+        )
 
-    @retry(tries=2, delay=60)
     def send_img(self, md5: str = "", base64_data: str = ""):
         """
         发送图片消息
@@ -111,12 +150,14 @@ class QyWeixinBot:
         :param base64_data: 图片的 Base64 编码数据
         :return: 响应 JSON
         """
-        webhook_url = f"{self.base_url}/cgi-bin/webhook/send?key={self.webhook_key}"
-        data = {"msgtype": "image", "image": {"base64": base64_data, "md5": md5}}
-        res = requests.post(webhook_url, json=data, headers={"Content-Type": "text/plain"})
-        return self._handle_response(res)
+        return self._send_with_retry(
+            lambda: self._post_message(
+                "image",
+                {"base64": base64_data, "md5": md5},
+                headers={"Content-Type": "text/plain"},
+            )
+        )
 
-    @retry(tries=2, delay=60)
     def upload_media(self, file_name: str, data: bytes):
         """
         上传临时素材
@@ -125,11 +166,14 @@ class QyWeixinBot:
         :param data: 文件二进制数据
         :return: 响应 JSON（包含 media_id）
         """
-        url = f"{self.base_url}/cgi-bin/webhook/upload_media?key={self.webhook_key}&type=file"
-        res = requests.post(url, files={"media": (file_name, data)})
-        return self._handle_response(res)
 
-    @retry(tries=2, delay=60)
+        def _upload_once():
+            url = f"{self.base_url}/cgi-bin/webhook/upload_media?key={self.webhook_key}&type=file"
+            res = requests.post(url, files={"media": (file_name, data)})
+            return self._handle_response(res)
+
+        return self._send_with_retry(_upload_once)
+
     def send_file(self, media_id: str):
         """
         发送文件消息（需先调用 upload_media 获取 media_id）
@@ -137,10 +181,7 @@ class QyWeixinBot:
         :param media_id: 素材 ID（由 upload_media 返回）
         :return: 响应 JSON
         """
-        webhook_url = f"{self.base_url}/cgi-bin/webhook/send?key={self.webhook_key}"
-        data = {"msgtype": "file", "file": {"media_id": media_id}}
-        res = requests.post(webhook_url, json=data, headers={"Content-Type": "application/json"})
-        return self._handle_response(res)
+        return self._send_with_retry(lambda: self._post_message("file", {"media_id": media_id}))
 
     @staticmethod
     def encode_image(file_path: str) -> tuple:
