@@ -7,6 +7,8 @@
         "env": {
             // 环境变量设置
             "PYTHONPATH": ".", // 设置Python路径为项目根目录，确保能正确导入模块
+            "APP_ID":"jcutils",
+            "env":"dev"
         },
         "use_new_terminal": false, // 不在新终端中运行，而是在现有终端面板中执行
         "allow_concurrent_runs": false, // 禁止并发运行，防止同一个任务同时运行多个实例

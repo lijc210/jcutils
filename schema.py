@@ -3,21 +3,5 @@ from pydantic import BaseModel
 
 class AppConfig(BaseModel):
     APP_ID: str
-    APP_NAME: str
     ENV: str
-    MYSQL_TEST_CONNECT_TIMEOUT: int
-    MYSQL_TEST_DB: str
-    MYSQL_TEST_HOST: str
-    MYSQL_TEST_MAX_CONNECTIONS: int
-    MYSQL_TEST_MIN_CONNECTIONS: int
-    MYSQL_TEST_PASSWD: str
-    MYSQL_TEST_PORT: int
-    MYSQL_TEST_USER: str
-    POSTGRES_TEST_CONNECT_TIMEOUT: int
-    POSTGRES_TEST_DB: str
-    POSTGRES_TEST_HOST: str
-    POSTGRES_TEST_MAX_CONNECTIONS: int
-    POSTGRES_TEST_MIN_CONNECTIONS: int
-    POSTGRES_TEST_PASSWD: str
-    POSTGRES_TEST_PORT: int
-    POSTGRES_TEST_USER: str
+    PYTHONPATH: str
