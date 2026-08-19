@@ -70,11 +70,14 @@ class ConfigLoader:
         远程失败则降级使用过期缓存，
         无缓存才真正抛异常。
         """
+
         cache_file = cls._get_cache_file(source, app_id)  # 统一在这里获取一次
 
         # 1. 缓存有效，直接返回
         cached = cls._load_cache(cache_file)
         if cached is not None:
+            ENV = os.getenv("ENV", default="dev").lower()
+            print(f"[config] ENV: {ENV}，APP_ID: {app_id}")
             return cached
 
         # 2. 尝试拉取远程
@@ -108,16 +111,15 @@ class ConfigLoader:
 
         APP_ID = os.getenv("APP_ID", default="")
         ENV = os.getenv("ENV", "dev").lower()
-        if not APP_ID:
-            raise ValueError("APP_ID 未设置")
-        if not ENV:
-            raise ValueError("ENV 未设置")
 
         NACOS_SERVER = os.getenv("NACOS_SERVER", default="")
         NACOS_NAMESPACE = os.getenv("NACOS_NAMESPACE", "").lower() or ENV
         NACOS_GROUP = os.getenv("NACOS_GROUP", default="")
         NACOS_USERNAME = os.getenv("NACOS_USERNAME", default="")
         NACOS_PASSWORD = os.getenv("NACOS_PASSWORD", default="")
+
+        print(f"[config] 从 Nacos 加载配置: {NACOS_SERVER}")
+        print(f"[config] ENV: {ENV}，APP_ID: {APP_ID}")
 
         if (
             not NACOS_SERVER
@@ -130,9 +132,6 @@ class ConfigLoader:
             raise ValueError(
                 "使用 Nacos 时必须配置 NACOS_SERVER、NACOS_NAMESPACE、NACOS_GROUP、APP_ID、NACOS_USERNAME 和 NACOS_PASSWORD"
             )
-
-        print(f"[config] 从 Nacos 加载配置: {NACOS_SERVER}")
-        print(f"[config] ENV: {ENV}，APP_ID: {APP_ID}")
 
         nacos_client = NacosClient(
             server=NACOS_SERVER, namespace=NACOS_NAMESPACE, username=NACOS_USERNAME, password=NACOS_PASSWORD
@@ -158,10 +157,6 @@ class ConfigLoader:
 
         APP_ID = os.getenv("APP_ID", default="")
         ENV = os.getenv("ENV", "DEV").lower()
-        if not APP_ID:
-            raise ValueError("APP_ID 未设置")
-        if not ENV:
-            raise ValueError("ENV 未设置")
 
         APOLLO_META_SERVER_ADDRESS = os.getenv("APOLLO_META_SERVER_ADDRESS", default="")
         APOLLO_APP_SECRET = os.getenv("APOLLO_APP_SECRET", default="")
@@ -169,11 +164,11 @@ class ConfigLoader:
 
         APOLLO_NAMESPACES = os.getenv("APOLLO_NAMESPACES", "application").split(",")
 
-        if not APOLLO_META_SERVER_ADDRESS:
-            raise ValueError("APOLLO_META_SERVER_ADDRESS 未配置")
-
         print(f"[config] 从 Apollo 加载配置: {APOLLO_META_SERVER_ADDRESS}")
         print(f"[config] ENV: {ENV}，APP_ID: {APP_ID}")
+
+        if not APOLLO_META_SERVER_ADDRESS:
+            raise ValueError("APOLLO_META_SERVER_ADDRESS 未配置")
 
         client = ApolloClient(
             meta_server_address=APOLLO_META_SERVER_ADDRESS,
@@ -219,10 +214,6 @@ class ConfigLoader:
 
         APP_ID = os.getenv("APP_ID", default="")
         ENV = os.getenv("ENV", default="dev").lower()
-        if not APP_ID:
-            raise ValueError("APP_ID 未配置")
-        if not ENV:
-            raise ValueError("ENV 未配置")
 
         CONSUL_SCHEME = os.getenv("CONSUL_SCHEME", default="http")
         CONSUL_HOST = os.getenv("CONSUL_HOST", default="127.0.0.1")
@@ -299,12 +290,6 @@ class ConfigLoader:
         APP_ID = os.getenv("APP_ID", default="")
         ENV = os.getenv("ENV", default="dev").lower()
 
-        if not APP_ID:
-            raise ValueError("APP_ID 未配置")
-
-        if not ENV:
-            raise ValueError("ENV 未配置")
-
         ETCD_HOST = os.getenv("ETCD_HOST", default="127.0.0.1")
         ETCD_PORT = int(os.getenv("ETCD_PORT", default="2379"))
         ETCD_PREFIX = os.getenv("ETCD_PREFIX", default="")
@@ -372,10 +357,6 @@ class ConfigLoader:
 
         APP_ID = os.getenv("APP_ID", default="")
         ENV = os.getenv("ENV", default="dev").lower()
-        if not APP_ID:
-            raise ValueError("APP_ID 未设置")
-        if not ENV:
-            raise ValueError("ENV 未设置")
 
         print("[config] 从 .env 加载配置")
         print(f"[config] ENV: {ENV}，APP_ID: {APP_ID}")
@@ -535,7 +516,10 @@ class ConfigLoader:
         - local（默认）→ 从 .env 读取，再合并环境变量
         """
         CONFIG_SOURCE = os.getenv("CONFIG_SOURCE", "local").lower()
+        ENV = os.getenv("ENV", "dev").lower()
         APP_ID = os.getenv("APP_ID", "")
+        if not ENV:
+            raise ValueError("ENV 未配置")
         if not APP_ID:
             raise ValueError("APP_ID 未设置")
 
