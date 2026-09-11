@@ -7,6 +7,7 @@ ClickHouse 连接客户端，内部使用 with 上下文管理器自动管理连
 支持普通查询和流式查询
 """
 
+import os
 from typing import Any, Dict, Generator, Optional, Sequence, Tuple, Union
 
 try:
@@ -206,8 +207,6 @@ class ClickhouseClient:
 
 
 if __name__ == "__main__":
-    import os
-
     DATABASES_CK1_DB_HOST = os.environ.get("DATABASES_CK1_DB_HOST", "")
     DATABASES_CK1_DB_USER = os.environ.get("DATABASES_CK1_DB_USER", "")
     DATABASES_CK1_DB_PASSWD = os.environ.get("DATABASES_CK1_DB_PASSWD", "")

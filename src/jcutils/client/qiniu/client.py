@@ -1,4 +1,5 @@
 import json
+import os
 
 import requests
 
@@ -116,8 +117,6 @@ class QiniuClient:
 
 
 if __name__ == "__main__":
-    import os
-
     access_key = os.environ.get("QINIU_ACCESS_KEY")
     secret_key = os.environ.get("QINIU_SECRET_KEY")
 

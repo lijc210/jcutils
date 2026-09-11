@@ -2,10 +2,19 @@
 aetcd 不支持TLS
 """
 
+import asyncio
 import io
 from typing import Callable, List, Optional, Tuple
 
 from dotenv import dotenv_values
+
+try:
+    from aetcd import Client as AetcdClient  # type: ignore
+    from aetcd.utils import to_bytes  # type: ignore
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install jcutils[etcd] or uv add "jcutils[etcd]"')
+except Exception as e:
+    raise ImportError(f"aetcd 导入失败: {e}")
 
 
 class AsyncEtcdClient:
@@ -33,8 +42,6 @@ class AsyncEtcdClient:
         if self._client is not None:
             return
 
-        from aetcd import Client as AetcdClient
-
         self._client = AetcdClient(
             host=self._host,
             port=self._port,
@@ -48,8 +55,6 @@ class AsyncEtcdClient:
         """获取指定 key 的原始配置值。"""
         if not key:
             raise ValueError("key 必须提供")
-
-        from aetcd.utils import to_bytes
 
         await self._ensure_client()
         result = await self._client.get(to_bytes(key))
@@ -77,8 +82,6 @@ class AsyncEtcdClient:
         if not key_prefix:
             raise ValueError("key_prefix 必须提供")
 
-        from aetcd.utils import to_bytes
-
         await self._ensure_client()
         result = await self._client.get_prefix(to_bytes(key_prefix))
         items: List[Tuple[str, str]] = []
@@ -101,8 +104,6 @@ class AsyncEtcdClient:
         if not key:
             raise ValueError("key 必须提供")
 
-        from aetcd.utils import to_bytes
-
         await self._ensure_client()
 
         watch = await self._client.watch(to_bytes(key))
@@ -121,8 +122,6 @@ class AsyncEtcdClient:
             except Exception:
                 pass
 
-        import asyncio
-
         asyncio.create_task(_watch_loop())
 
     async def put(self, key: str, value: str, lease: Optional[int] = None):
@@ -135,8 +134,6 @@ class AsyncEtcdClient:
         if not key:
             raise ValueError("key 必须提供")
 
-        from aetcd.utils import to_bytes
-
         await self._ensure_client()
         await self._client.put(to_bytes(key), to_bytes(value), lease=lease)
 
@@ -144,8 +141,6 @@ class AsyncEtcdClient:
         """删除指定 key 的配置。"""
         if not key:
             raise ValueError("key 必须提供")
-
-        from aetcd.utils import to_bytes
 
         await self._ensure_client()
         await self._client.delete(to_bytes(key))

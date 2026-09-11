@@ -4,6 +4,18 @@ from typing import Callable, Optional
 
 from dotenv import dotenv_values
 
+try:
+    from v2.nacos import (  # type: ignore
+        ClientConfigBuilder,
+        ConfigParam,
+        GRPCConfig,
+        NacosConfigService,
+    )
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install jcutils[nacos] or uv add "jcutils[nacos]"')
+except Exception as e:
+    raise ImportError(f"nacos-sdk-python 导入失败: {e}")
+
 
 class NacosClient:
     def __init__(
@@ -25,12 +37,6 @@ class NacosClient:
         if self._client is not None:
             return
 
-        from v2.nacos import (  # type: ignore
-            ClientConfigBuilder,
-            GRPCConfig,
-            NacosConfigService,
-        )
-
         client_config = (
             ClientConfigBuilder()
             .server_address(self._server)
@@ -46,8 +52,6 @@ class NacosClient:
     async def get_raw(self, data_id: Optional[str] = None, group: Optional[str] = None) -> str:
         if not data_id or not group:
             raise ValueError("data_id 和 group 必须提供")
-
-        from v2.nacos import ConfigParam  # type: ignore
 
         await self._ensure_client()
         raw = await self._client.get_config(

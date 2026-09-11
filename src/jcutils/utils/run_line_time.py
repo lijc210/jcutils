@@ -4,6 +4,7 @@
 @Desc:  : 功能描述 - 行级性能分析装饰器
 """
 
+import time
 from functools import wraps
 from typing import Any, Callable, TypeVar
 
@@ -34,7 +35,6 @@ def run_line_time(f: Callable[..., T]) -> Callable[..., T]:
 
 
 if __name__ == "__main__":
-    import time
 
     @run_line_time
     def aaa() -> None:

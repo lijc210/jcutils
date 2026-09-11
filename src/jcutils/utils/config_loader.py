@@ -7,6 +7,7 @@ pyapollo-zenkilan
 from __future__ import annotations
 
 import asyncio
+import base64
 import importlib
 import importlib.util
 import json
@@ -18,6 +19,18 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from dotenv import dotenv_values, load_dotenv
+
+from ..client import AsyncEtcdClient, NacosClient
+
+try:
+    import httpx
+except ModuleNotFoundError:
+    httpx = None  # 可选依赖，使用时检查
+
+try:
+    from pyapollo.client import ApolloClient  # type: ignore
+except ModuleNotFoundError:
+    ApolloClient = None  # 可选依赖，使用时检查
 
 if TYPE_CHECKING:
     from schema import AppConfig  # 只有 IDE/类型检查时才执行，运行时跳过
@@ -107,8 +120,6 @@ class ConfigLoader:
     @classmethod
     def _load_from_nacos(cls) -> dict:
         """从 Nacos 拉取配置，合并环境变量（环境变量优先级更高）"""
-        from ..client import NacosClient
-
         APP_ID = os.getenv("APP_ID", default="")
         ENV = os.getenv("ENV", "dev").lower()
 
@@ -153,7 +164,8 @@ class ConfigLoader:
     @classmethod
     def _load_from_apollo(cls) -> dict:
         """从 Apollo 拉取所有命名空间配置，合并环境变量（环境变量优先级更高）"""
-        from pyapollo.client import ApolloClient  # type: ignore
+        if ApolloClient is None:
+            raise ImportError('请先安装：pip install jcutils[all] or uv add "jcutils[all]"')
 
         APP_ID = os.getenv("APP_ID", default="")
         ENV = os.getenv("ENV", "DEV").lower()
@@ -208,9 +220,8 @@ class ConfigLoader:
           myapp/dev/DB_PORT        → "5432"
           myapp/dev/feature/ENABLE → "true"   # 子目录 "/" 会被替换为 "_"，key 变为 FEATURE_ENABLE
         """
-        import base64
-
-        import httpx
+        if httpx is None:
+            raise ImportError('请先安装：pip install jcutils[all] or uv add "jcutils[all]"')
 
         APP_ID = os.getenv("APP_ID", default="")
         ENV = os.getenv("ENV", default="dev").lower()
@@ -285,8 +296,6 @@ class ConfigLoader:
                 DB_HOST=127.0.0.1
                 DB_PORT=5432
         """
-        from ..client import AsyncEtcdClient
-
         APP_ID = os.getenv("APP_ID", default="")
         ENV = os.getenv("ENV", default="dev").lower()
 
@@ -462,9 +471,6 @@ class ConfigLoader:
         Returns:
             tuple[str, str]: (data_dir, log_dir)
         """
-        import os
-        import sys
-
         # 1. 环境变量优先（最高优先级）
         data_dir_env = os.environ.get(f"{APP_ID.upper()}_DATA_DIR")
         log_dir_env = os.environ.get(f"{APP_ID.upper()}_LOG_DIR")

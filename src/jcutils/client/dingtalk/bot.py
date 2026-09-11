@@ -8,6 +8,7 @@
 import base64
 import hashlib
 import hmac
+import os
 import time
 import urllib.parse
 import warnings
@@ -239,8 +240,6 @@ class DingTalkBot:
 
 
 if __name__ == "__main__":
-    import os
-
     access_token = os.getenv("DINGTALK_ACCESS_TOKEN")
     secret = os.getenv("DINGTALK_SECRET")
     bot = DingTalkBot(access_token=access_token, secret=secret)

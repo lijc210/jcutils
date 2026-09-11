@@ -4,6 +4,13 @@ from typing import Callable, Optional
 
 from dotenv import dotenv_values
 
+try:
+    from etcd3gw import Etcd3Client  # type: ignore
+except ModuleNotFoundError:
+    raise ImportError('请先安装：pip install jcutils[etcd] or uv add "jcutils[etcd]"')
+except Exception as e:
+    raise ImportError(f"etcd3gw 导入失败: {e}")
+
 
 class EtcdClient:
     """etcd 配置中心客户端，同步版本。"""
@@ -33,8 +40,6 @@ class EtcdClient:
     def _ensure_client(self):
         if self._client is not None:
             return
-
-        from etcd3gw import Etcd3Client
 
         self._client = Etcd3Client(
             host=self._host,

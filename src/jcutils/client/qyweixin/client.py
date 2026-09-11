@@ -129,8 +129,6 @@ class QyWeixinClient(object):
 
 
 if __name__ == "__main__":
-    import os
-
     corp_id = os.environ["QYWEIXIN_CORP_ID"] = ""
     secret = os.environ["QYWEIXIN_SECRET"] = ""
     qyweixin_client = QyWeixinClient(corp_id, secret)

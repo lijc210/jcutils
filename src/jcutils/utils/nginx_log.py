@@ -6,6 +6,7 @@
              用于分析 Nginx 访问日志，筛选出响应时间超过阈值的请求记录
 """
 
+import argparse
 import sys
 from typing import Iterator, List, Optional, TextIO
 
@@ -110,8 +111,6 @@ def main() -> None:
     """
     主函数，提供命令行接口
     """
-    import argparse
-
     parser = argparse.ArgumentParser(description="Nginx 日志慢请求分析工具")
     parser.add_argument("log_file", nargs="?", help="Nginx 日志文件路径，如果不指定则从标准输入读取")
     parser.add_argument(

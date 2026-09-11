@@ -6,6 +6,7 @@ ClickHouse 连接客户端，使用 clickhouse-connect（HTTP 协议）
 pip install clickhouse-connect
 """
 
+import os
 from typing import Any, Dict, Generator, Optional, Sequence, Tuple, Union
 
 try:
@@ -181,8 +182,6 @@ class ClickhouseConnectClient:
 
 
 if __name__ == "__main__":
-    import os
-
     DATABASES_JDBC_CK1_DB_HOST = os.environ.get("DATABASES_JDBC_CK1_DB_HOST", "")
     DATABASES_JDBC_CK1_DB_USER = os.environ.get("DATABASES_JDBC_CK1_DB_USER", "")
     DATABASES_JDBC_CK1_DB_PASSWD = os.environ.get("DATABASES_JDBC_CK1_DB_PASSWD", "")

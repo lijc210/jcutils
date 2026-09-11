@@ -7,6 +7,7 @@
 
 import base64
 import hashlib
+import os
 import warnings
 from typing import Optional
 
@@ -199,8 +200,6 @@ class QyWeixinBot:
 
 
 if __name__ == "__main__":
-    import os
-
     webhook_key = os.getenv("QYWEIXIN_WEBHOOK_KEY")
     bot = QyWeixinBot(webhook_key=webhook_key)
 

@@ -7,6 +7,7 @@ Microsoft SQL Server 连接池客户端，内部使用 with 上下文管理器�
 支持普通查询和流式查询
 """
 
+import os
 from typing import Any, Dict, Generator, List, Optional, Sequence, Tuple, Union
 
 try:
@@ -285,8 +286,6 @@ class MsSqlClient:
 
 
 if __name__ == "__main__":
-    import os
-
     DATABASES_MSSQL_DB_HOST = os.environ.get("DATABASES_MSSQL_DB_HOST", "")
     DATABASES_MSSQL_DB_USER = os.environ.get("DATABASES_MSSQL_DB_USER", "")
     DATABASES_MSSQL_DB_PASSWD = os.environ.get("DATABASES_MSSQL_DB_PASSWD", "")
