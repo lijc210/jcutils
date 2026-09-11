@@ -6,8 +6,6 @@ pyapollo-zenkilan
 
 from __future__ import annotations
 
-import asyncio
-import base64
 import importlib
 import importlib.util
 import json
@@ -20,12 +18,7 @@ from typing import TYPE_CHECKING
 
 from dotenv import dotenv_values, load_dotenv
 
-from ..client import AsyncEtcdClient, NacosClient
-
-try:
-    import httpx
-except ModuleNotFoundError:
-    httpx = None  # 可选依赖，使用时检查
+from ..client import ConsulClient, EtcdClient, NacosClient
 
 try:
     from pyapollo.client import ApolloClient  # type: ignore
@@ -148,11 +141,11 @@ class ConfigLoader:
             server=NACOS_SERVER, namespace=NACOS_NAMESPACE, username=NACOS_USERNAME, password=NACOS_PASSWORD
         )
 
-        async def _fetch():
-            async with nacos_client:
-                return await nacos_client.get_dict(APP_ID, NACOS_GROUP)
+        try:
+            nacos_config = nacos_client.get_dict(APP_ID, NACOS_GROUP)
+        finally:
+            nacos_client.shutdown()
 
-        nacos_config = asyncio.run(_fetch())
         if not nacos_config:
             raise Exception(f"Nacos 配置拉取失败: DATA_ID={APP_ID}, GROUP={NACOS_GROUP}")
 
@@ -165,7 +158,7 @@ class ConfigLoader:
     def _load_from_apollo(cls) -> dict:
         """从 Apollo 拉取所有命名空间配置，合并环境变量（环境变量优先级更高）"""
         if ApolloClient is None:
-            raise ImportError('请先安装：pip install jcutils[all] or uv add "jcutils[all]"')
+            raise ImportError("请先安装：pip install pyapollo-zenkilan or uv add pyapollo-zenkilan")
 
         APP_ID = os.getenv("APP_ID", default="")
         ENV = os.getenv("ENV", "DEV").lower()
@@ -209,7 +202,7 @@ class ConfigLoader:
     def _load_from_consul(cls) -> dict:
         """从 Consul KV 拉取配置，合并环境变量（环境变量优先级更高）
 
-        依赖：pip install httpx
+        依赖：pip install python-consul2
 
         KV 路径约定（两种方式二选一）：
           1. 显式指定前缀：CONSUL_PREFIX=myapp/prod/
@@ -220,9 +213,6 @@ class ConfigLoader:
           myapp/dev/DB_PORT        → "5432"
           myapp/dev/feature/ENABLE → "true"   # 子目录 "/" 会被替换为 "_"，key 变为 FEATURE_ENABLE
         """
-        if httpx is None:
-            raise ImportError('请先安装：pip install jcutils[all] or uv add "jcutils[all]"')
-
         APP_ID = os.getenv("APP_ID", default="")
         ENV = os.getenv("ENV", default="dev").lower()
 
@@ -238,38 +228,14 @@ class ConfigLoader:
         print(f"[config] 从 Consul 加载配置: {CONSUL_HOST}:{CONSUL_PORT}")
         print(f"[config] KV prefix: {kv_prefix}")
 
-        async def _fetch() -> dict:
-            base_url = f"{CONSUL_SCHEME}://{CONSUL_HOST}:{CONSUL_PORT}"
-            headers = {}
-            if CONSUL_TOKEN:
-                headers["X-Consul-Token"] = CONSUL_TOKEN
+        with ConsulClient(
+            host=CONSUL_HOST,
+            port=CONSUL_PORT,
+            scheme=CONSUL_SCHEME,
+            token=CONSUL_TOKEN or None,
+        ) as consul_client:
+            consul_config = consul_client.get_prefix_dict(kv_prefix)
 
-            async with httpx.AsyncClient(base_url=base_url) as client:
-                resp = await client.get(f"/v1/kv/{kv_prefix}", params={"recurse": "true"}, headers=headers)
-                if resp.status_code == 404:
-                    raise Exception(f"Consul KV 路径不存在: prefix={kv_prefix}")
-                resp.raise_for_status()
-                data = resp.json()
-
-            if not data:
-                raise Exception(f"Consul KV 配置为空或路径不存在: prefix={kv_prefix}")
-
-            result = {}
-            for item in data:
-                key = item.get("Key")
-                value = base64.b64decode(item.get("Value", "")).decode("utf-8")
-                for aline in value.splitlines():
-                    alist = aline.split("=", 1)
-                    if len(alist) == 2:
-                        k, v = alist
-                        result[k.strip()] = v.strip()
-                    else:
-                        if "/" in key:
-                            continue
-                        result[key.strip()] = aline.strip()
-            return result
-
-        consul_config = asyncio.run(_fetch())
         if not consul_config:
             raise Exception(f"Consul 配置拉取后为空: prefix={kv_prefix}")
 
@@ -301,35 +267,33 @@ class ConfigLoader:
 
         ETCD_HOST = os.getenv("ETCD_HOST", default="127.0.0.1")
         ETCD_PORT = int(os.getenv("ETCD_PORT", default="2379"))
+        ETCD_SCHEME = os.getenv("ETCD_SCHEME", default="http")
         ETCD_PREFIX = os.getenv("ETCD_PREFIX", default="")
-        ETCD_USER = os.getenv("ETCD_USER", default="")
-        ETCD_PASSWORD = os.getenv("ETCD_PASSWORD", default="")
 
         kv_prefix = ETCD_PREFIX or f"{APP_ID}/{ENV}"
 
         print(f"[config] 从 etcd 加载配置: {ETCD_HOST}:{ETCD_PORT}")
         print(f"[config] KV prefix: {kv_prefix}")
 
-        async def _fetch():
-            client = AsyncEtcdClient(
+        def _fetch():
+            client = EtcdClient(
                 host=ETCD_HOST,
                 port=ETCD_PORT,
-                username=ETCD_USER or None,
-                password=ETCD_PASSWORD or None,
+                protocol=ETCD_SCHEME,
             )
-            async with client:
-                items = await client.get_prefix(kv_prefix)
+            with client:
+                items = client.get_prefix(kv_prefix)
                 if not items:
                     raise Exception(f"etcd KV 配置为空或路径不存在: prefix={kv_prefix}")
                 return items
 
         try:
-            kvs = asyncio.run(_fetch())
+            kvs = _fetch()
         except Exception as e:
             err_msg = str(e)
             if "user name is empty" in err_msg or "authentication failed" in err_msg:
                 raise Exception(
-                    f"etcd 认证失败，请配置 ETCD_USER 和 ETCD_PASSWORD 环境变量。原始错误: {err_msg}"
+                    f"etcd 认证失败，请检查 ETCD_HOST、ETCD_PORT 和 ETCD_SCHEME 配置。原始错误: {err_msg}"
                 ) from e
             raise
 

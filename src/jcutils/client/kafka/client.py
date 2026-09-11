@@ -11,7 +11,7 @@ try:
     from kafka import KafkaAdminClient, KafkaConsumer, KafkaProducer, TopicPartition
     from kafka.errors import KafkaError
 except ModuleNotFoundError:
-    raise ImportError('请先安装：pip install jcutils[kafka] or uv add "jcutils[kafka]"')
+    raise ImportError("请先安装：pip install kafka-python or uv add kafka-python")
 except Exception as e:
     raise ImportError(f"kafka 导入失败: {e}")
 

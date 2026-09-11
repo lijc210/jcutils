@@ -13,6 +13,8 @@ if TYPE_CHECKING:
     # 仅供 IDE 静态分析，运行时不执行
     from .clickhouse.client import ClickhouseClient
     from .clickhouse.jdbc_client import ClickhouseConnectClient
+    from .consul.async_client import AsyncConsulClient
+    from .consul.client import ConsulClient
     from .dataworks.client import DataworksClient
     from .dingtalk.bot import DingTalkBot
     from .elasticsearch.client import EsClient, EsClient6
@@ -31,6 +33,7 @@ if TYPE_CHECKING:
     from .mssql.client import MsSqlClient
     from .mysql.async_client import AsyncMySQLClient
     from .mysql.client import MySqlClient
+    from .nacos.async_client import AsyncNacosClient
     from .nacos.client import NacosClient
     from .odbc.client import PyodbcClient
     from .postgres.async_client import AsyncPostgresClient
@@ -62,6 +65,8 @@ def _lazy_import(module_path, class_names):
 
 (ClickhouseClient,) = _lazy_import(".clickhouse.client", ["ClickhouseClient"])
 (ClickhouseConnectClient,) = _lazy_import(".clickhouse.jdbc_client", ["ClickhouseConnectClient"])
+(ConsulClient,) = _lazy_import(".consul.client", ["ConsulClient"])
+(AsyncConsulClient,) = _lazy_import(".consul.async_client", ["AsyncConsulClient"])
 (DataworksClient,) = _lazy_import(".dataworks.client", ["DataworksClient"])
 (EsClient, EsClient6) = _lazy_import(".elasticsearch.client", ["EsClient", "EsClient6"])
 (ImaplibClient,) = _lazy_import(".email.client", ["ImaplibClient"])
@@ -92,6 +97,7 @@ def _lazy_import(module_path, class_names):
 (WeixinClient,) = _lazy_import(".weixin.client", ["WeixinClient"])
 (AsyncEtcdClient,) = _lazy_import(".etcd.async_client", ["AsyncEtcdClient"])
 (EtcdClient,) = _lazy_import(".etcd.client", ["EtcdClient"])
+(AsyncNacosClient,) = _lazy_import(".nacos.async_client", ["AsyncNacosClient"])
 (NacosClient,) = _lazy_import(".nacos.client", ["NacosClient"])
 
 
@@ -128,5 +134,8 @@ __all__ = [
     "WeixinClient",
     "AsyncEtcdClient",
     "EtcdClient",
+    "AsyncNacosClient",
     "NacosClient",
+    "ConsulClient",
+    "AsyncConsulClient",
 ]

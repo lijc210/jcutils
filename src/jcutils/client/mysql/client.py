@@ -13,7 +13,7 @@ try:
     import pymysql  # type: ignore
     from dbutils.pooled_db import PooledDB  # type: ignore
 except ModuleNotFoundError:
-    raise ImportError('请先安装：pip install jcutils[mysql] or uv add "jcutils[mysql]"')
+    raise ImportError("请先安装：pip install PyMySQL DBUtils or uv add PyMySQL DBUtils")
 except Exception as e:
     raise ImportError(f"pymysql 导入失败: {e}")
 

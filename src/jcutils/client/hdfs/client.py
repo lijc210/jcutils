@@ -9,7 +9,7 @@ try:
     from hdfs.client import InsecureClient
     from retry import retry
 except ModuleNotFoundError:
-    raise ImportError('请先安装：pip install jcutils[hdfs,sentry] or uv add "jcutils[hdfs,sentry]"')
+    raise ImportError("请先安装：pip install pyhdfs retry or uv add pyhdfs retry")
 except Exception as e:
     raise ImportError(f"hdfs 依赖导入失败: {e}")
 

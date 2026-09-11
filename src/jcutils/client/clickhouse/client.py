@@ -14,7 +14,7 @@ try:
     from clickhouse_driver import connect  # type: ignore
     from clickhouse_driver.dbapi.extras import DictCursor  # type: ignore
 except ModuleNotFoundError:
-    raise ImportError('请先安装：pip install jcutils[clickhouse] or uv add "jcutils[clickhouse]"')
+    raise ImportError("请先安装：pip install clickhouse-driver or uv add clickhouse-driver")
 except Exception as e:
     raise ImportError(f"clickhouse_driver 导入失败: {e}")
 

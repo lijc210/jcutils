@@ -35,7 +35,7 @@ try:
     import redis
     from redis.cluster import RedisCluster
 except ModuleNotFoundError:
-    raise ImportError('请先安装：pip install jcutils[redis] or uv add "jcutils[redis]"')
+    raise ImportError("请先安装：pip install redis or uv add redis")
 except Exception as e:
     raise ImportError(f"redis 导入失败: {e}")
 

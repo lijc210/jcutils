@@ -12,7 +12,7 @@ try:
     from aetcd import Client as AetcdClient  # type: ignore
     from aetcd.utils import to_bytes  # type: ignore
 except ModuleNotFoundError:
-    raise ImportError('请先安装：pip install jcutils[etcd] or uv add "jcutils[etcd]"')
+    raise ImportError("请先安装：pip install aetcd or uv add aetcd")
 except Exception as e:
     raise ImportError(f"aetcd 导入失败: {e}")
 

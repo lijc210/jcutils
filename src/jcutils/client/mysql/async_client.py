@@ -13,7 +13,7 @@ try:
     import aiomysql
     from aiomysql import Pool
 except ModuleNotFoundError:
-    raise ImportError('请先安装：pip install jcutils[mysql] or uv add "jcutils[mysql]"')
+    raise ImportError("请先安装：pip install aiomysql or uv add aiomysql")
 except Exception as e:
     raise ImportError(f"aiomysql 导入失败: {e}")
 

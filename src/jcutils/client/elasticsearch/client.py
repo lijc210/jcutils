@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 try:
     from elasticsearch import Elasticsearch, NotFoundError, helpers
 except ModuleNotFoundError:
-    raise ImportError('请先安装：pip install jcutils[elasticsearch] or uv add "jcutils[elasticsearch]"')
+    raise ImportError("请先安装：pip install elasticsearch or uv add elasticsearch")
 except Exception as e:
     raise ImportError(f"elasticsearch 导入失败: {e}")
 

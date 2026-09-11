@@ -13,14 +13,14 @@ from typing import Any, Dict, Generator, List, Optional, Sequence, Tuple, Union
 try:
     import pymssql
 except ModuleNotFoundError:
-    raise ImportError('请先安装：pip install jcutils[pymssql] or uv add "jcutils[pymssql]"')
+    raise ImportError("请先安装：pip install pymssql or uv add pymssql")
 except Exception as e:
     raise ImportError(f"pymssql 导入失败: {e}")
 
 try:
     from dbutils.pooled_db import PooledDB  # type: ignore
 except ModuleNotFoundError:
-    raise ImportError('请先安装：pip install "jcutils[mssql]" or uv add "jcutils[mssql]"')
+    raise ImportError("请先安装：pip install DBUtils or uv add DBUtils")
 except Exception as e:
     raise ImportError(f"DBUtils 导入失败: {e}")
 

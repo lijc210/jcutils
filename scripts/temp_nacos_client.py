@@ -1,7 +1,7 @@
 import asyncio
 import os
 
-from jcutils.client import NacosClient
+from jcutils.client import AsyncNacosClient
 
 NACOS_SERVER = os.getenv("NACOS_SERVER", default="")
 NACOS_NAMESPACE = os.getenv("NACOS_NAMESPACE", default="")
@@ -20,7 +20,7 @@ print(f"配置ID: {NACOS_DATA_ID}")
 print(f"用户名: {NACOS_USERNAME}")
 print("=" * 60)
 
-nacos_client = NacosClient(
+nacos_client = AsyncNacosClient(
     server=NACOS_SERVER, namespace=NACOS_NAMESPACE, username=NACOS_USERNAME, password=NACOS_PASSWORD
 )
 

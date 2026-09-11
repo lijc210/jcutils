@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 try:
     import asyncpg
 except ModuleNotFoundError:
-    raise ImportError('请先安装：pip install jcutils[postgresql] or uv add "jcutils[postgresql]"')
+    raise ImportError("请先安装：pip install asyncpg or uv add asyncpg")
 except Exception as e:
     raise ImportError(f"asyncpg 导入失败: {e}")
 

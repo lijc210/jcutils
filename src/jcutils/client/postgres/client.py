@@ -13,7 +13,7 @@ try:
     from psycopg.rows import dict_row, tuple_row
     from psycopg_pool import ConnectionPool
 except ModuleNotFoundError:
-    raise ImportError('请先安装：pip install jcutils[postgresql] or uv add "jcutils[postgresql]"')
+    raise ImportError('请先安装：pip install "psycopg[pool]" or uv add "psycopg[pool]"')
 except Exception as e:
     raise ImportError(f"psycopg 导入失败: {e}")
 

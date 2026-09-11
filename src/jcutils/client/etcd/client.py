@@ -7,7 +7,7 @@ from dotenv import dotenv_values
 try:
     from etcd3gw import Etcd3Client  # type: ignore
 except ModuleNotFoundError:
-    raise ImportError('请先安装：pip install jcutils[etcd] or uv add "jcutils[etcd]"')
+    raise ImportError("请先安装：pip install etcd3gw or uv add etcd3gw")
 except Exception as e:
     raise ImportError(f"etcd3gw 导入失败: {e}")
 
@@ -73,6 +73,27 @@ class EtcdClient:
 
         raw = self.get_raw(key=key)
         return dict(dotenv_values(stream=io.StringIO(raw)))
+
+    def get_prefix(self, key_prefix: str) -> list[tuple[str, str]]:
+        """获取指定前缀的所有 KV 对。
+
+        :param key_prefix: key 前缀
+        :return: [(key, value), ...]，key 和 value 均已解码为 str
+        """
+        if not key_prefix:
+            raise ValueError("key_prefix 必须提供")
+
+        self._ensure_client()
+        values = self._client.get_prefix(key_prefix)
+        items: list[tuple[str, str]] = []
+        for value, kv in values:
+            k = kv.get("key", key_prefix)
+            if isinstance(k, bytes):
+                k = k.decode("utf-8")
+            if isinstance(value, bytes):
+                value = value.decode("utf-8")
+            items.append((k, value))
+        return items
 
     def add_listener(
         self,
