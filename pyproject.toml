@@ -65,7 +65,7 @@ all = [
     "pyarrow>=12.0.0",
     "pyhdfs>=0.1.1",
     "clickhouse-driver",
-    "clickhouse_connect"
+    "clickhouse_connect",
     "pyodps>=0.11.6.1; python_version < '3.9'",
     "pyodps; python_version >= '3.9'",
     "alibabacloud-maxcompute20220104>=2.3.0",
