@@ -855,7 +855,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://mirrors.cloud.tencent.com/pypi/simple" }
 dependencies = [
-    { name = "typing-extensions" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://mirrors.cloud.tencent.com/pypi/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219" }
 wheels = [
@@ -939,7 +939,7 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 dependencies = [
-    { name = "debtcollector" },
+    { name = "debtcollector", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://mirrors.cloud.tencent.com/pypi/packages/35/45/b603e4f3f1c6bdec051ee533166c7f880c88bbf2c2ed0ac661861374302f/futurist-3.3.0.tar.gz", hash = "sha256:3b84fdce52eb5094b486d95b8b9b1117fdf040f364a96969fbc22df955f42558" }
 wheels = [
@@ -956,7 +956,7 @@ resolution-markers = [
     "python_full_version >= '3.11' and python_full_version < '3.13'",
 ]
 dependencies = [
-    { name = "debtcollector" },
+    { name = "debtcollector", marker = "python_full_version >= '3.11'" },
 ]
 sdist = { url = "https://mirrors.cloud.tencent.com/pypi/packages/43/c3/d6df974b3b488606a1064b02094e90ba8a35efa8072ab403cca2b9e3c51d/futurist-3.4.0.tar.gz", hash = "sha256:ed00c6f4c815cce9549157e8ec28624b2f5ec83f9577b0dbe54f7516137d43d3" }
 wheels = [
@@ -1194,6 +1194,8 @@ all = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "etcd3gw" },
+    { name = "psycopg", extra = ["pool"] },
     { name = "requests" },
 ]
 
@@ -1236,7 +1238,11 @@ requires-dist = [
 provides-extras = ["all"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "requests", specifier = ">=2.32.3" }]
+dev = [
+    { name = "etcd3gw", specifier = ">=2.7.0" },
+    { name = "psycopg", extras = ["pool"], specifier = ">=3.3.4" },
+    { name = "requests", specifier = ">=2.32.3" },
+]
 
 [[package]]
 name = "kafka-python"

@@ -27,7 +27,7 @@ license = { text = "MIT License" }
 dependencies = [
     "python-dotenv",
     "pydantic",
-    "python-dateutil"
+    "python-dateutil",
 ]
 
 [project.optional-dependencies]
@@ -97,7 +97,11 @@ managed = true
 allow-direct-references = true
 
 [dependency-groups]
-dev = ["requests>=2.32.3"]
+dev = [
+    "etcd3gw>=2.7.0",
+    "psycopg[pool]>=3.3.4",
+    "requests>=2.32.3",
+]
 
 [tool.ty.environment]
 extra-paths = ["src"]
