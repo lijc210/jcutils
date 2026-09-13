@@ -269,17 +269,17 @@ class ConfigLoader:
         ETCD_PORT = int(os.getenv("ETCD_PORT", default="2379"))
         ETCD_SCHEME = os.getenv("ETCD_SCHEME", default="http")
         ETCD_PREFIX = os.getenv("ETCD_PREFIX", default="")
+        ETCD_USERNAME = os.getenv("ETCD_USERNAME", default="")
+        ETCD_PASSWORD = os.getenv("ETCD_PASSWORD", default="")
 
-        kv_prefix = ETCD_PREFIX or f"{APP_ID}/{ENV}"
+        kv_prefix = ETCD_PREFIX or f"/{APP_ID}/{ENV}"
 
         print(f"[config] 从 etcd 加载配置: {ETCD_HOST}:{ETCD_PORT}")
         print(f"[config] KV prefix: {kv_prefix}")
 
         def _fetch():
             client = EtcdClient(
-                host=ETCD_HOST,
-                port=ETCD_PORT,
-                protocol=ETCD_SCHEME,
+                host=ETCD_HOST, port=ETCD_PORT, protocol=ETCD_SCHEME, username=ETCD_USERNAME, password=ETCD_PASSWORD
             )
             with client:
                 items = client.get_prefix(kv_prefix)

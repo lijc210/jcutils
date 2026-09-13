@@ -27,7 +27,11 @@ etcd_client = EtcdClient(
 
 def main():
     # 获取配置客户端
-    content = etcd_client.get_raw(key="test")
+    content = etcd_client.get_raw(key="/jcutils/dev")
+    print("当前配置内容:")
+    print(content)
+    print("=" * 60)
+    content = etcd_client.get_dict(key="/jcutils/dev")
     print("当前配置内容:")
     print(content)
     print("=" * 60)
