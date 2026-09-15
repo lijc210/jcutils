@@ -17,7 +17,7 @@ class S3Bucket:
     need download boto3 module
     """
 
-    def __init__(self, access_key="", secret_key="", endponint=""):
+    def __init__(self, access_key="", secret_key="", endponint="", verify=True):
         self.access_key = access_key
         self.secret_key = secret_key
         self.endponint = endponint
@@ -29,6 +29,7 @@ class S3Bucket:
             aws_access_key_id=self.access_key,
             aws_secret_access_key=self.secret_key,
             endpoint_url=self.endponint,
+            verify=verify,
         )
 
     def list_buckets(self):
