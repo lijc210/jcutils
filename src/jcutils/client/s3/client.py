@@ -195,6 +195,54 @@ class S3Bucket:
             print("error occurred.", exc)
             return False
 
+    def rename_dir(self, bucket_name, old_prefix, new_prefix):
+        """
+        修改目录路径（将 old_prefix 目录下所有对象移动到 new_prefix 目录下）
+        S3 没有原生的目录重命名，实现方式：先复制所有对象到新路径，全部成功后再删除原对象
+        args:
+            bucket_name: bucket名称
+            old_prefix: 原目录路径
+            new_prefix: 新目录路径
+        returns:
+            bool: 是否成功
+        """
+        # 归一化目录路径，确保以 / 结尾
+        if old_prefix and not old_prefix.endswith("/"):
+            old_prefix += "/"
+        if new_prefix and not new_prefix.endswith("/"):
+            new_prefix += "/"
+
+        # 分页列举原目录下所有对象，避免超过 1000 个时遗漏
+        keys = []
+        paginator = self.s3.get_paginator("list_objects_v2")
+        for page in paginator.paginate(Bucket=bucket_name, Prefix=old_prefix):
+            for content in page.get("Contents", []):
+                keys.append(content["Key"])
+
+        if not keys:
+            print(f"no objects found under {old_prefix}")
+            return False
+
+        GB = 1024**3
+        config = TransferConfig(multipart_threshold=5 * GB, max_concurrency=10, use_threads=True)
+
+        try:
+            for key in keys:
+                new_key = new_prefix + key[len(old_prefix) :]
+                print(f"copying {key} -> {new_key}")
+                # managed copy，大文件会自动走 multipart copy
+                self.s3.copy({"Bucket": bucket_name, "Key": key}, bucket_name, new_key, Config=config)
+        except Exception as exc:
+            print("error occurred.", exc)
+            return False
+
+        # 全部复制成功后再删除原对象
+        for key in keys:
+            self.delete_object(bucket_name, key)
+
+        print(f"rename done: {old_prefix} -> {new_prefix}")
+        return True
+
 
 if __name__ == "__main__":
     BUCKET_NAME = "file"
