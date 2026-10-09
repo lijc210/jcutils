@@ -82,8 +82,68 @@ jobs:
           name: wheels-freethreaded-${{ matrix.os }}-${{ matrix.target }}
           path: dist
 
+
+  build-free-threaded-314:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64
+            manylinux: '2_28'
+            interpreter: /opt/python/cp314-cp314t/bin/python3.14
+
+          - os: ubuntu-24.04-arm
+            target: aarch64
+            manylinux: '2_28'
+            interpreter: /opt/python/cp314-cp314t/bin/python3.14
+
+          - os: macos-latest
+            target: aarch64
+            manylinux: off
+            interpreter: python
+
+          - os: macos-latest
+            target: x86_64
+            manylinux: off
+            interpreter: python
+
+          - os: windows-latest
+            target: x86_64
+            manylinux: off
+            interpreter: python
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up free-threaded Python 3.14
+        if: ${{ matrix.manylinux == 'off' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          freethreaded: true
+
+      - name: Verify free-threaded Python
+        if: ${{ matrix.manylinux == 'off' }}
+        run: |
+          python --version --version
+          python -c "import sys; print('GIL enabled:', sys._is_gil_enabled())"
+
+      - uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.target }}
+          args: --release --out dist -i ${{ matrix.interpreter }}
+          manylinux: ${{ matrix.manylinux }}
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-freethreaded-314-${{ matrix.os }}-${{ matrix.target }}
+          path: dist
+
   publish:
-    needs: [build, build-free-threaded]
+    needs: [build, build-free-threaded, build-free-threaded-314]
     runs-on: ubuntu-latest
     permissions:
       contents: write
