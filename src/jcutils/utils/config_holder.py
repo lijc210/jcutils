@@ -1,16 +1,19 @@
 import asyncio
+import logging
 import os
 
 from src.jcutils.utils.nacos_client import NacosClient
 
 from .config_loader import ConfigLoader
 
+logger = logging.getLogger(__name__)
+
 nacos_config = ConfigLoader.load_config()
 
 
 async def config_listener(tenant, data_id, group, content):
     config_dict = ConfigLoader._merge_with_env(nacos_config)
-    print(f"配置已更新: tenant={tenant}, data_id={data_id}, group={group}")
+    logger.info("配置已更新: tenant=%s, data_id=%s, group=%s", tenant, data_id, group)
 
 
 NACOS_SERVER = os.getenv("NACOS_SERVER", default="")
@@ -27,9 +30,9 @@ nacos_client = NacosClient(
 
 async def main():
     # 添加监听器
-    print("正在添加配置监听器...")
+    logger.info("正在添加配置监听器...")
     await nacos_client.add_listener(config_listener, data_id=NACOS_DATA_ID, group=NACOS_GROUP)
-    print("监听器已添加，等待配置变更...")
+    logger.info("监听器已添加，等待配置变更...")
 
 
 asyncio.run(main())

@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import math
 import os
 
@@ -10,6 +11,8 @@ except ModuleNotFoundError:
     raise ImportError('请先安装：pip install boto3 or uv add "boto3"')
 except Exception as e:
     raise ImportError(f"boto3 导入失败: {e}")
+
+logger = logging.getLogger(__name__)
 
 
 class S3Bucket:
@@ -77,13 +80,13 @@ class S3Bucket:
             multipart_threshold=5 * GB, max_concurrency=10, use_threads=True
         )  # 10默认，增加数值增加带宽
 
-        print("-----begin to upload!----")
+        logger.info("-----begin to upload!----")
         try:
             self.s3.upload_file(local_path, bucket_name, object_name, Config=config)
         except ClientError as e:
-            print("error happend!" + str(e))
+            logger.error("error happened! %s", e)
             return False
-        print("upload done!")
+        logger.info("upload done!")
         return True
 
     def upload_files(self, bucket_name, path_bucket, local_path):
@@ -96,7 +99,7 @@ class S3Bucket:
         # multipart upload
         chunk_size = 52428800
         source_size = os.stat(local_path).st_size
-        print("source_size=", source_size)
+        logger.debug("source_size=%s", source_size)
         chunk_count = int(math.ceil(source_size / float(chunk_size)))
         mpu = self.s3.create_multipart_upload(Bucket=bucket_name, Key=path_bucket)
         part_info = {"Parts": []}
@@ -115,20 +118,20 @@ class S3Bucket:
                         UploadId=mpu["UploadId"],
                         Body=data,
                     )
-                except Exception as exc:
-                    print("error occurred.", exc)
+                except Exception:
+                    logger.error("error occurred.", exc_info=True)
                     return False
-                print("uploading {} {}".format(local_path, str(i / chunk_count)))
+                logger.debug("uploading %s %s", local_path, str(i / chunk_count))
                 parts = {"PartNumber": i + 1, "ETag": new_etag}
                 part_info["Parts"].append(parts)
-        print("%s uploaded!" % (local_path))
+        logger.info("%s uploaded!", local_path)
         self.s3.complete_multipart_upload(
             Bucket=bucket_name,
             Key=path_bucket,
             UploadId=mpu["UploadId"],
             MultipartUpload=part_info,
         )
-        print("%s uploaded success!" % (local_path))
+        logger.info("%s uploaded success!", local_path)
         return True
 
     def download_file(self, bucket_name, object_name, local_path):
@@ -147,14 +150,14 @@ class S3Bucket:
             if not os.path.exists(local_path):
                 os.mkdir(local_path)
             file_name = os.path.join(local_path, os.path.basename(object_name))
-        print(object_name, file_name)
+        logger.debug("%s -> %s", object_name, file_name)
         try:
             self.s3.download_file(bucket_name, object_name, file_name, Config=config)
-        except Exception as exc:
-            print("some wrong!")
-            print("error occurred.", exc)
+        except Exception:
+            logger.error("some wrong!")
+            logger.error("error occurred.", exc_info=True)
             return False
-        print("downlaod ok", object_name)
+        logger.info("download ok: %s", object_name)
         return True
 
     def download_files(self, bucket_name, path_prefix, path_local):
@@ -167,14 +170,15 @@ class S3Bucket:
         for key in list:
             name = os.path.basename(key["Key"])
             object_name = key["Key"]
-            print("-----", object_name, name)
+            logger.debug("-----")
+            logger.debug("%s -> %s", object_name, name)
             if not os.path.exists(path_local):
                 os.makedirs(path_local)
             file_name = os.path.join(path_local, name)
             try:
                 self.s3.download_file(bucket_name, object_name, file_name, Config=config)
-            except Exception as exc:
-                print("error occurred.", exc)
+            except Exception:
+                logger.error("error occurred.", exc_info=True)
                 return False
         return True
 
@@ -189,10 +193,10 @@ class S3Bucket:
         """
         try:
             self.s3.delete_object(Bucket=bucket_name, Key=object_name)
-            print(f"deleted {object_name}")
+            logger.info("deleted %s", object_name)
             return True
-        except Exception as exc:
-            print("error occurred.", exc)
+        except Exception:
+            logger.error("error occurred.", exc_info=True)
             return False
 
     def rename_dir(self, bucket_name, old_prefix, new_prefix):
@@ -220,7 +224,7 @@ class S3Bucket:
                 keys.append(content["Key"])
 
         if not keys:
-            print(f"no objects found under {old_prefix}")
+            logger.warning("no objects found under %s", old_prefix)
             return False
 
         GB = 1024**3
@@ -229,22 +233,24 @@ class S3Bucket:
         try:
             for key in keys:
                 new_key = new_prefix + key[len(old_prefix) :]
-                print(f"copying {key} -> {new_key}")
+                logger.debug("copying %s -> %s", key, new_key)
                 # managed copy，大文件会自动走 multipart copy
                 self.s3.copy({"Bucket": bucket_name, "Key": key}, bucket_name, new_key, Config=config)
-        except Exception as exc:
-            print("error occurred.", exc)
+        except Exception:
+            logger.error("error occurred.", exc_info=True)
             return False
 
         # 全部复制成功后再删除原对象
         for key in keys:
             self.delete_object(bucket_name, key)
 
-        print(f"rename done: {old_prefix} -> {new_prefix}")
+        logger.info("rename done: %s -> %s", old_prefix, new_prefix)
         return True
 
 
 if __name__ == "__main__":
+    # 演示脚本：开启 INFO 级别日志输出
+    logging.basicConfig(level=logging.INFO)
     BUCKET_NAME = "file"
     access_key = os.environ.get("R2_ACCESS_KEY")
     secret_key = os.environ.get("R2_SECRET_KEY")

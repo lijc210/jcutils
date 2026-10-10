@@ -5,11 +5,13 @@
 @desc: 节假日数据获取工具
 """
 
-import traceback
+import logging
 from datetime import datetime, timedelta
 from typing import Any, List, Optional
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 def day_ops(days: int = 0, outfmt: str = "%Y-%m-%d %H:%M:%S") -> str:
@@ -58,8 +60,7 @@ def get_holiday(year: str) -> List[List[Any]]:
     try:
         res_dict: dict = requests.get(url, timeout=10).json()
     except Exception:
-        traceback.print_exc()
-        print(traceback.format())
+        logger.error("获取节假日数据失败", exc_info=True)
     else:
         code: int = res_dict["code"]
         date_range = get_day_range(year + "-01-01", year + "-12-31", infmt="%Y-%m-%d", outfmt="%Y-%m-%d")
@@ -103,7 +104,7 @@ def main() -> None:
     end_year: str = day_ops(days=365 * 2, outfmt="%Y")
     data_list: List[List[Any]] = []
     for year_int in range(int(start_year), int(end_year) + 1):
-        print(year_int)
+        logger.info("%s", year_int)
         year_date: List[List[Any]] = get_holiday(str(year_int))
         data_list.extend(year_date)
 

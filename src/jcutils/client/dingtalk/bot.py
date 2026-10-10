@@ -8,6 +8,7 @@
 import base64
 import hashlib
 import hmac
+import logging
 import os
 import time
 import urllib.parse
@@ -18,6 +19,8 @@ import requests
 from retry import retry
 
 warnings.filterwarnings("ignore")
+
+logger = logging.getLogger(__name__)
 
 
 class DingTalkBot:
@@ -79,7 +82,7 @@ class DingTalkBot:
         if errcode == 45009:  # 接口调用超过限制
             raise ValueError(result.get("errmsg", "接口调用超过限制"))
         elif errcode != 0:
-            print("发送失败：", result)
+            logger.error("钉钉消息发送失败：%s", result)
             # 发送错误信息作为文本消息
             fallback_data = {
                 "msgtype": "text",

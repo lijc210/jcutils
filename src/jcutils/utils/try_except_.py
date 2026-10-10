@@ -4,6 +4,7 @@
 @Desc:  : 函数异常，发送通知
 """
 
+import logging
 import sys
 import time
 import traceback
@@ -14,6 +15,8 @@ from utils.work_weixin_send import Weixin
 
 T = TypeVar("T")
 
+logger = logging.getLogger(__name__)
+
 
 def try_except(fun: Callable[..., T]) -> Callable[..., T]:
     def notice(*args: Any, **kwargs: Any) -> T:
@@ -21,7 +24,7 @@ def try_except(fun: Callable[..., T]) -> Callable[..., T]:
             res: T = fun(*args, **kwargs)
         except Exception:
             res = None  # type: ignore
-            traceback.print_exc()
+            logger.error("函数 %s 执行失败", fun.__name__, exc_info=True)
 
             fun_name: str = fun.__name__
             error_content: str = traceback.format_exc()

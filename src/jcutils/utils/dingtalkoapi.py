@@ -7,11 +7,14 @@
 """
 
 import json
+import logging
 import time
 from typing import Any, Dict, List, Optional, Union
 
 import requests
 from retry import retry
+
+logger = logging.getLogger(__name__)
 
 
 @retry(tries=3, delay=2)  # 报错重试
@@ -232,7 +235,7 @@ class Dingtalk:
             hasMore = resp_dict.get("hasMore", False)
             recordresult: Union[bool, List[Dict[str, Any]]] = resp_dict.get("recordresult", False)
             if recordresult is False:
-                print("resp_dict", json.dumps(resp_dict, ensure_ascii=False))
+                logger.error("resp_dict: %s", json.dumps(resp_dict, ensure_ascii=False))
             elif isinstance(recordresult, list):
                 recordresult_all.extend(recordresult)
             offset = offset + limit
@@ -253,7 +256,7 @@ class Dingtalk:
             ).json()
             errcode: Optional[int] = resp_dict.get("errcode")
             if errcode != 0:
-                print(json.dumps(resp_dict))
+                logger.error("%s", json.dumps(resp_dict))
             process_instance: Dict[str, Any] = resp_dict["process_instance"]
             return process_instance
         except Exception:
@@ -318,7 +321,7 @@ class Dingtalk:
             ).json()
             errcode: Optional[int] = resp_dict.get("errcode")
             if errcode != 0:
-                print(json.dumps(resp_dict))
+                logger.error("%s", json.dumps(resp_dict))
             tmp_list: List[Dict[str, Any]] = resp_dict["result"].get("list", [])
             next_cursor = resp_dict["result"].get("next_cursor", None)
             processinstance_list.extend(tmp_list)

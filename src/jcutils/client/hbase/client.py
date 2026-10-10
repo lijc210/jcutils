@@ -11,6 +11,10 @@ except ModuleNotFoundError:
 except Exception as e:
     raise ImportError(f"happybase 导入失败: {e}")
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class HbaseClient:
     def __init__(self, host="10.10.23.11", port=9090, timeout=120000, size=20, compat="0.98"):
@@ -26,7 +30,7 @@ class HbaseClient:
             timeout=self.timeout,
             compat=self.compat,
         )
-        print("hbase初始化为", self.pool._queue.qsize())
+        logger.info("hbase 初始化完成，连接池大小=%s", self.pool._queue.qsize())
 
     def conn(self):
         """

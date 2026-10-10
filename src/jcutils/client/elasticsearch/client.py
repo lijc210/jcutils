@@ -4,7 +4,7 @@ Created on 2017/11/22 0022 17:31
 Desc: Elasticsearch 客户端封装，支持旧版 API 的兼容层
 """
 
-import traceback
+import logging
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 try:
@@ -13,6 +13,8 @@ except ModuleNotFoundError:
     raise ImportError("请先安装：pip install elasticsearch or uv add elasticsearch")
 except Exception as e:
     raise ImportError(f"elasticsearch 导入失败: {e}")
+
+logger = logging.getLogger(__name__)
 
 
 class EsClient:
@@ -71,7 +73,7 @@ class EsClient:
         except NotFoundError:
             return None
         except Exception:
-            traceback.print_exc()
+            logger.error("elasticsearch 操作失败", exc_info=True)
             return None
 
     def mget(
@@ -97,7 +99,7 @@ class EsClient:
             response = self.es_client.mget(body=body, index=index)
             return response
         except Exception:
-            traceback.print_exc()
+            logger.error("elasticsearch 操作失败", exc_info=True)
             return None
 
     def search(
@@ -126,7 +128,7 @@ class EsClient:
             response = self.es_client.search(**kwargs)
             return response
         except Exception:
-            traceback.print_exc()
+            logger.error("elasticsearch 操作失败", exc_info=True)
             return None
 
     def index(
@@ -152,7 +154,7 @@ class EsClient:
             response = self.es_client.index(**kwargs)
             return response
         except Exception:
-            traceback.print_exc()
+            logger.error("elasticsearch 操作失败", exc_info=True)
             return None
 
     def update(
@@ -178,7 +180,7 @@ class EsClient:
             response = self.es_client.update(**kwargs)
             return response
         except Exception:
-            traceback.print_exc()
+            logger.error("elasticsearch 操作失败", exc_info=True)
             return None
 
     def mtermvectors(
@@ -202,7 +204,7 @@ class EsClient:
             response = self.es_client.mtermvectors(**kwargs)
             return response
         except Exception:
-            traceback.print_exc()
+            logger.error("elasticsearch 操作失败", exc_info=True)
             return None
 
     def bulk(
@@ -254,7 +256,7 @@ class EsClient:
                 errors_list = list(errors)  # type: ignore[arg-type]
             return (success, errors_list)
         except Exception:
-            traceback.print_exc()
+            logger.error("elasticsearch 操作失败", exc_info=True)
             return (0, [])
 
     def parallel_bulk(
@@ -316,7 +318,7 @@ class EsClient:
         except NotFoundError:
             return False
         except Exception:
-            traceback.print_exc()
+            logger.error("elasticsearch 操作失败", exc_info=True)
             return False
 
     def delete_by_query(
@@ -340,7 +342,7 @@ class EsClient:
             self.es_client.delete_by_query(**kwargs)
             return True
         except Exception:
-            traceback.print_exc()
+            logger.error("elasticsearch 操作失败", exc_info=True)
             return False
 
     def scan(

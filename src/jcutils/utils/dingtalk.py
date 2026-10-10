@@ -7,9 +7,12 @@ https://open.dingtalk.com/document/orgapp/dingtalk-openapi-overview
 """
 
 import json
+import logging
 
 import requests
 from retry import retry
+
+logger = logging.getLogger(__name__)
 
 
 class Dingtalk:
@@ -27,7 +30,7 @@ class Dingtalk:
         """
         url = self.base_url + "/gettoken?corpid={}&corpsecret={}".format(self.corpid, self.corpsecret)
         resp = requests.get(url, timeout=20)
-        print(resp.text)
+        logger.debug("%s", resp.text)
         access_token = resp.json()["access_token"]
         return access_token
 
@@ -53,7 +56,7 @@ class Dingtalk:
         code = resp_dict.get("code")
         if code == "InvalidAuthentication":
             self.access_token = self.gettoken()
-            print(resp.text)
+            logger.error("%s", resp.text)
             raise Exception("InvalidAuthentication")
         # print(resp.text)
         return resp_dict
@@ -103,7 +106,7 @@ class Dingtalk:
             success = resp_dict.get("success")
             if success is False:
                 self.access_token = self.gettoken()
-                print(res.text)
+                logger.error("%s", res.text)
                 raise Exception(json.dumps(resp_dict))
             tmp_list = resp_dict["result"].get("list", [])
             nextToken = resp_dict["result"].get("nextToken", None)
@@ -132,7 +135,7 @@ class Dingtalk:
         code = resp_dict.get("code")
         if code == "InvalidAuthentication":
             self.access_token = self.gettoken()
-            print(resp.text)
+            logger.error("%s", resp.text)
             raise Exception("InvalidAuthentication")
         # print(resp.text)
         return resp_dict
@@ -161,7 +164,7 @@ class Dingtalk:
         code = resp_dict.get("code")
         if code == "InvalidAuthentication":
             self.access_token = self.gettoken()
-            print(resp.text)
+            logger.error("%s", resp.text)
             raise Exception("InvalidAuthentication")
         # print(resp.text)
         return resp_dict

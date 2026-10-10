@@ -9,6 +9,7 @@ from __future__ import annotations
 import importlib
 import importlib.util
 import json
+import logging
 import os
 import sys
 import tempfile
@@ -33,6 +34,9 @@ if TYPE_CHECKING:
 load_dotenv(override=False)
 
 
+logger = logging.getLogger(__name__)
+
+
 class ConfigLoader:
     """配置加载器"""
 
@@ -50,9 +54,9 @@ class ConfigLoader:
         """将配置写入系统临时目录缓存"""
         try:
             cache_file.write_text(json.dumps(config, ensure_ascii=False), encoding="utf-8")
-            print(f"[config] 缓存已写入: {cache_file}")
+            logger.debug("[config] 缓存已写入: %s", cache_file)
         except Exception as e:
-            print(f"[config] 缓存写入失败（忽略）: {e}")
+            logger.warning("[config] 缓存写入失败（忽略）: %s", e)
 
     @classmethod
     def _load_cache(cls, cache_file: Path) -> dict | None:
@@ -61,11 +65,11 @@ class ConfigLoader:
             if cache_file.exists():
                 age = time.time() - cache_file.stat().st_mtime
                 if age < cls.CACHE_TTL:
-                    print(f"[config] 使用本地缓存（{int(age)}s 前，TTL={cls.CACHE_TTL}s）: {cache_file}")
+                    logger.debug("[config] 使用本地缓存（%ss 前，TTL=%ss）: %s", int(age), cls.CACHE_TTL, cache_file)
                     return json.loads(cache_file.read_text(encoding="utf-8"))
-                print(f"[config] 缓存已过期（{int(age)}s > {cls.CACHE_TTL}s），重新拉取")
+                logger.debug("[config] 缓存已过期（%ss > %ss），重新拉取", int(age), cls.CACHE_TTL)
         except Exception as e:
-            print(f"[config] 读取缓存失败（忽略）: {e}")
+            logger.warning("[config] 读取缓存失败（忽略）: %s", e)
         return None
 
     @classmethod
@@ -83,7 +87,7 @@ class ConfigLoader:
         cached = cls._load_cache(cache_file)
         if cached is not None:
             ENV = os.getenv("ENV", default="dev").lower()
-            print(f"[config] ENV: {ENV}，APP_ID: {app_id}")
+            logger.info("[config] ENV: %s，APP_ID: %s", ENV, app_id)
             return cached
 
         # 2. 尝试拉取远程
@@ -92,15 +96,15 @@ class ConfigLoader:
             cls._save_cache(config, cache_file)
             return config
         except Exception as e:
-            print(f"[config] 远程拉取失败: {e}")
+            logger.error("[config] 远程拉取失败: %s", e)
 
         # 3. 降级：使用过期缓存
         try:
             if cache_file.exists():
-                print(f"[config] 降级使用过期缓存: {cache_file}")
+                logger.warning("[config] 降级使用过期缓存: %s", cache_file)
                 return json.loads(cache_file.read_text(encoding="utf-8"))
         except Exception as e2:
-            print(f"[config] 读取过期缓存也失败: {e2}")
+            logger.error("[config] 读取过期缓存也失败: %s", e2)
 
         # 4. 无任何缓存，真正报错
         raise RuntimeError("远程配置拉取失败，且无本地缓存可用，请检查配置中心连接")
@@ -122,8 +126,8 @@ class ConfigLoader:
         NACOS_USERNAME = os.getenv("NACOS_USERNAME", default="")
         NACOS_PASSWORD = os.getenv("NACOS_PASSWORD", default="")
 
-        print(f"[config] 从 Nacos 加载配置: {NACOS_SERVER}")
-        print(f"[config] ENV: {ENV}，APP_ID: {APP_ID}")
+        logger.info("[config] 从 Nacos 加载配置: %s", NACOS_SERVER)
+        logger.info("[config] ENV: %s，APP_ID: %s", ENV, APP_ID)
 
         if (
             not NACOS_SERVER
@@ -169,8 +173,8 @@ class ConfigLoader:
 
         APOLLO_NAMESPACES = os.getenv("APOLLO_NAMESPACES", "application").split(",")
 
-        print(f"[config] 从 Apollo 加载配置: {APOLLO_META_SERVER_ADDRESS}")
-        print(f"[config] ENV: {ENV}，APP_ID: {APP_ID}")
+        logger.info("[config] 从 Apollo 加载配置: %s", APOLLO_META_SERVER_ADDRESS)
+        logger.info("[config] ENV: %s，APP_ID: %s", ENV, APP_ID)
 
         if not APOLLO_META_SERVER_ADDRESS:
             raise ValueError("APOLLO_META_SERVER_ADDRESS 未配置")
@@ -225,8 +229,8 @@ class ConfigLoader:
         # 优先用 CONSUL_PREFIX，否则自动拼接 {APP_ID}/{ENV}/
         kv_prefix = CONSUL_PREFIX or f"{APP_ID}/{ENV}"
 
-        print(f"[config] 从 Consul 加载配置: {CONSUL_HOST}:{CONSUL_PORT}")
-        print(f"[config] KV prefix: {kv_prefix}")
+        logger.info("[config] 从 Consul 加载配置: %s:%s", CONSUL_HOST, CONSUL_PORT)
+        logger.info("[config] KV prefix: %s", kv_prefix)
 
         with ConsulClient(
             host=CONSUL_HOST,
@@ -274,8 +278,8 @@ class ConfigLoader:
 
         kv_prefix = ETCD_PREFIX or f"/{APP_ID}/{ENV}"
 
-        print(f"[config] 从 etcd 加载配置: {ETCD_HOST}:{ETCD_PORT}")
-        print(f"[config] KV prefix: {kv_prefix}")
+        logger.info("[config] 从 etcd 加载配置: %s:%s", ETCD_HOST, ETCD_PORT)
+        logger.info("[config] KV prefix: %s", kv_prefix)
 
         def _fetch():
             client = EtcdClient(
@@ -331,8 +335,8 @@ class ConfigLoader:
         APP_ID = os.getenv("APP_ID", default="")
         ENV = os.getenv("ENV", default="dev").lower()
 
-        print("[config] 从 .env 加载配置")
-        print(f"[config] ENV: {ENV}，APP_ID: {APP_ID}")
+        logger.info("[config] 从 .env 加载配置")
+        logger.info("[config] ENV: %s，APP_ID: %s", ENV, APP_ID)
 
         local_config = dict(dotenv_values(".env"))
         local_config["APP_ID"] = APP_ID
@@ -412,17 +416,17 @@ class ConfigLoader:
             with open(cls.SCHEMA_PATH, "r", encoding="utf-8") as f:
                 existing_content = f.read()
             if existing_content == new_content:
-                print("[config] schema.py 无变化，跳过生成")
+                logger.debug("[config] schema.py 无变化，跳过生成")
             else:
-                print("[config] schema.py 已变化，更新生成")
+                logger.info("[config] schema.py 已变化，更新生成")
                 with open(cls.SCHEMA_PATH, "w", encoding="utf-8") as f:
                     f.write(new_content)
-                print(f"[config] schema.py 更新完成，共 {len(cls._config_dict)} 个配置项")
+                logger.info("[config] schema.py 更新完成，共 %s 个配置项", len(cls._config_dict))
         else:
-            print("[config] schema.py 不存在，生成中")
+            logger.info("[config] schema.py 不存在，生成中")
             with open(cls.SCHEMA_PATH, "w", encoding="utf-8") as f:
                 f.write(new_content)
-            print(f"[config] schema.py 生成完成，共 {len(cls._config_dict)} 个配置项")
+            logger.info("[config] schema.py 生成完成，共 %s 个配置项", len(cls._config_dict))
 
         return cls._load_schema_module()
 

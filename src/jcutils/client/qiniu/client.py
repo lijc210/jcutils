@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 
 import requests
@@ -9,6 +10,8 @@ except ModuleNotFoundError:
     raise ImportError('请先安装：pip install qiniu or uv add "qiniu"')
 except Exception as e:
     raise ImportError(f"qiniu 导入失败: {e}")
+
+logger = logging.getLogger(__name__)
 
 
 class QiniuClient:
@@ -86,7 +89,7 @@ class QiniuClient:
         bucket = BucketManager(self.q)
 
         ret, info = bucket.bucket_domain(bucket_name)
-        print(info)
+        logger.debug("%s", info)
         # print(info.text_body[0])
         bucket_domain = json.loads(info.text_body)[0]
 
@@ -113,7 +116,7 @@ class QiniuClient:
         """
         bucket = BucketManager(self.q)
         ret, info = bucket.delete(bucket_name, object_name)
-        print(info)
+        logger.debug("%s", info)
 
 
 if __name__ == "__main__":

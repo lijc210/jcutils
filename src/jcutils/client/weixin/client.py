@@ -6,6 +6,7 @@
 @Desc    :   微信公众号api
 """
 
+import logging
 import os
 import sys
 import time
@@ -14,6 +15,8 @@ import warnings
 import requests
 
 warnings.filterwarnings("ignore")
+
+logger = logging.getLogger(__name__)
 
 
 class WeixinClient:
@@ -70,7 +73,7 @@ class WeixinClient:
             ]
         }
         response = requests.post(url, json=data)
-        print(response.text)
+        logger.debug("%s", response.text)
 
 
 if __name__ == "__main__":

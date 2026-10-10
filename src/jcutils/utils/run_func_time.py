@@ -4,11 +4,14 @@
 @Desc:  : 功能描述 - 函数执行时间装饰器
 """
 
+import logging
 import time
 from functools import wraps
 from typing import Any, Callable, TypeVar
 
 T = TypeVar("T")
+
+logger = logging.getLogger(__name__)
 
 
 def run_time(function: Callable[..., T]) -> Callable[..., T]:
@@ -23,7 +26,7 @@ def run_time(function: Callable[..., T]) -> Callable[..., T]:
         t0: float = time.time()
         result: T = function(*args, **kwargs)
         t1: float = time.time()
-        print("{}: {} seconds".format(function.__name__, str(t1 - t0)))
+        logger.info("%s: %s seconds", function.__name__, str(t1 - t0))
         return result
 
     return wrapped_function

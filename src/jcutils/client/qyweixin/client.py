@@ -7,15 +7,17 @@ http://qydev.weixin.qq.com/wiki/index.php?title=%E6%B6%88%E6%81%AF%E7%B1%BB%E5%9
 """
 
 import json
+import logging
 import os
 import tempfile
 import time
-import traceback
 import warnings
 
 import requests
 
 warnings.filterwarnings("ignore")
+
+logger = logging.getLogger(__name__)
 
 
 class QyWeixinClient(object):
@@ -88,11 +90,11 @@ class QyWeixinClient(object):
             )
             response_json = response.json()
             if response_json["errcode"] == 0:
-                print("success")
+                logger.info("success")
             else:
-                print("fail")
+                logger.error("fail: %s", response_json)
         except Exception:
-            traceback.print_exc()
+            logger.error("发送消息失败", exc_info=True)
 
     def media_upload(
         self, path, type, agentid
@@ -101,7 +103,7 @@ class QyWeixinClient(object):
         media_url = f"{self.qyapi_url}/cgi-bin/media/upload?access_token={token}&type={type}"
         files = {"media": open(path, "rb")}
         r = requests.post(media_url, files=files)
-        print(r.text)
+        logger.debug("%s", r.text)
         re = json.loads(r.text)
         # print("media_id: " + re['media_id'])
         return re["media_id"]
@@ -122,9 +124,9 @@ class QyWeixinClient(object):
         }
         response = requests.post(url=url, data=json.dumps(data))
         response_json = response.json()
-        print(response_json)
+        logger.debug("%s", response_json)
         if response_json["errcode"] == 0:
-            print("success")
+            logger.info("success")
         return response_json
 
 
