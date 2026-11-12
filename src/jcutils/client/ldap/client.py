@@ -210,7 +210,7 @@ class LdapClient:
         search_filter: str = "(&(objectclass=person)(!(sAMAccountName=*)))",
         attributes: Optional[str] = ALL_ATTRIBUTES,
         page_size: int = 500,
-    ) -> Generator[List[Union[str, int]], None, None]:
+    ) -> Generator[List[Any], None, None]:
         """
         分页获取所有用户信息
 
@@ -310,7 +310,7 @@ class LdapClient:
         search_filter: str = "(&(objectclass=person)(!(sAMAccountName=*)))",
         attributes: Optional[str] = ALL_ATTRIBUTES,
         page_size: int = 500,
-    ) -> List[List[Union[str, int]]]:
+    ) -> List[List[Any]]:
         """
         获取所有用户信息（非生成器版本）
 

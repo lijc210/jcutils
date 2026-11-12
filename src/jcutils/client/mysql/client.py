@@ -10,8 +10,8 @@ MySQL 连接池客户端，内部使用 with 上下文管理器自动管理连�
 from typing import Any, Dict, Generator, Optional, Sequence, Tuple, Union
 
 try:
-    import pymysql  # type: ignore
-    from dbutils.pooled_db import PooledDB  # type: ignore
+    import pymysql
+    from dbutils.pooled_db import PooledDB
 except ModuleNotFoundError:
     raise ImportError("请先安装：pip install PyMySQL DBUtils or uv add PyMySQL DBUtils")
 except Exception as e:

@@ -29,7 +29,7 @@ Redis 客户端工具类
         rc.set("key", "value")
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 try:
     import redis
@@ -505,7 +505,7 @@ class RedisClient:
         """
         return self.client.sadd(name, *values)
 
-    def smembers(self, name: str) -> set:
+    def smembers(self, name: str) -> Set[str]:
         """
         获取集合所有元素
 
@@ -737,6 +737,69 @@ class RedisClient:
             >>> rc.keys("*:2024")  # 获取所有以 ":2024" 结尾的键
         """
         return self.client.keys(pattern)
+
+    # ==================== 通用命令 ====================
+
+    def execute_command(self, *args: Any, **kwargs: Any) -> Any:
+        """
+        执行任意 Redis 命令
+
+        直接透传到底层 redis-py 客户端，可用于本类未封装的命令
+
+        Args:
+            *args: 命令及参数，如 "INFO", "keyspace"
+            **kwargs: 其他参数，透传给底层客户端
+
+        Returns:
+            命令执行结果
+
+        Examples:
+            >>> rc.execute_command("INFO", "keyspace")  # 返回原始文本
+            >>> rc.execute_command("DBSIZE")
+            >>> rc.execute_command("CONFIG", "GET", "maxmemory")
+
+        注意：
+            集群模式下命令按 key 自动路由，无 key 的命令只会发送到其中一个节点
+        """
+        return self.client.execute_command(*args, **kwargs)
+
+    def info(self, section: Optional[str] = None, target_nodes: Optional[str] = None) -> Any:
+        """
+        获取 Redis 服务器信息，对应 INFO 命令
+
+        Args:
+            section: 信息段落，如 "server"、"memory"、"keyspace"，为 None 时返回全部
+            target_nodes: 仅集群模式有效，指定查询的节点：
+                "primaries"（默认）主节点、"replicas" 从节点、"all" 全部节点
+
+        Returns:
+            单机模式：dict，各段落解析后的字典
+            集群模式：dict，键为节点地址（host:port），值为该节点的信息字典
+
+        Examples:
+            >>> rc.info("keyspace")
+            {'db0': {'keys': 12, 'expires': 3, 'avg_ttl': 0}}
+
+            >>> rc.info()  # 全部信息
+            >>> rc.info("memory")  # 仅内存段落
+
+            # 集群模式查询所有节点
+            >>> rc.info("keyspace", target_nodes="all")
+            {'10.10.20.97:7000': {'db0': {...}}, '10.10.20.97:7001': {'db0': {...}}}
+        """
+        if not self.startup_nodes:
+            return self.client.info(section)
+
+        if target_nodes in (None, "primaries"):
+            nodes = self.client.get_primaries()
+        elif target_nodes == "replicas":
+            nodes = self.client.get_replicas()
+        elif target_nodes == "all":
+            nodes = self.client.get_nodes()
+        else:
+            raise ValueError("target_nodes 仅支持 None、'primaries'、'replicas'、'all'")
+
+        return {node.name: self.client.info(section, target_nodes=node) for node in nodes}
 
     # ==================== Pipeline 管道操作 ====================
 

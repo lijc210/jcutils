@@ -13,7 +13,7 @@ import os
 import time
 import urllib.parse
 import warnings
-from typing import Optional
+from typing import List, Optional
 
 import requests
 from retry import retry
@@ -48,6 +48,8 @@ class DingTalkBot:
 
         :return: (timestamp, sign) 元组
         """
+        if self.secret is None:
+            raise ValueError("secret 未配置")
         timestamp = str(round(time.time() * 1000))
         secret_enc = self.secret.encode("utf-8")
         string_to_sign = "{}\n{}".format(timestamp, self.secret)
@@ -197,7 +199,7 @@ class DingTalkBot:
             md5 = hashlib.md5(data).hexdigest()
         return base64_data, md5
 
-    def send_action_card(self, title: str, text: str, btn_orientation: str = "0", btns: list = None):
+    def send_action_card(self, title: str, text: str, btn_orientation: str = "0", btns: Optional[List[dict]] = None):
         """
         发送 ActionCard 消息
 

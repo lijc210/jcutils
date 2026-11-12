@@ -1,7 +1,7 @@
 import json
 import os
 
-from pyapollo.client import ApolloClient
+from pyapollo.client import ApolloClient  # ty: ignore[import-not-found]
 
 APOLLO_META_SERVER_ADDRESS = os.getenv("APOLLO_META_SERVER_ADDRESS")
 APOLLO_APP_ID = os.getenv("APOLLO_APP_ID")

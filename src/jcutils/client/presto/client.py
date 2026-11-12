@@ -296,9 +296,9 @@ if __name__ == "__main__":
         count += 1
     print("fetch_iter:", count)
 
-    # 兼容旧版 API
-    results = presto_client.query(sql)
+    # 旧版 API 的替代写法
+    results = presto_client.fetchall(sql)
     print("query count:", len(results))
 
-    results_dict = presto_client.queryDict(sql)
+    results_dict = presto_client_dict.fetchall(sql)
     print("queryDict count:", len(results_dict))

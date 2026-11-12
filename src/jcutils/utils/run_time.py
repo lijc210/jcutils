@@ -26,7 +26,7 @@ def run_time(function: Callable[..., T]) -> Callable[..., T]:
         t0: float = time.time()
         result: T = function(*args, **kwargs)
         t1: float = time.time()
-        logger.info("%s: %s seconds", function.__name__, str(t1 - t0))
+        logger.info("%s: %s seconds", getattr(function, "__name__", type(function).__name__), str(t1 - t0))
         return result
 
     return wrapped_function
@@ -54,7 +54,9 @@ def run_time_log(
             if cost_time > thr_time:  # 大于多少秒的，则记录下来
                 # print args,kwargs
                 if logger:
-                    logger.warning("{}\t{}\t{}".format(function.__name__, cost_time, message))
+                    logger.warning(
+                        "{}\t{}\t{}".format(getattr(function, "__name__", type(function).__name__), cost_time, message)
+                    )
             return result
 
         return wrapped_function

@@ -8,7 +8,7 @@
 
 from typing import List, Union
 
-import wcwidth
+import wcwidth  # ty: ignore[import-not-found]
 
 
 def print_format(string: str, way: str = "^", width: int = 10, fill: str = " ") -> str:

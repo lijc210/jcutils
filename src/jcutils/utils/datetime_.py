@@ -73,6 +73,8 @@ def day_fmt(dt: Optional[str] = None, infmt: str = "%Y-%m-%d %H:%M:%S", outfmt: 
     :param outfmt: '%Y-%m-%d %H:%M:%S'
     :return: datetime str
     """
+    if dt is None:
+        dt = day_now(infmt)
     return time.strftime(outfmt, time.strptime(dt, infmt))
 
 
@@ -131,6 +133,8 @@ def get_month_days(dt: Optional[str] = None, infmt: str = "%Y-%m-%d %H:%M:%S") -
     获取指定年月天数
     :return:
     """
+    if dt is None:
+        dt = day_now(infmt)
     datetime.today()
     year = time.strptime(dt, infmt).tm_year
     month = time.strptime(dt, infmt).tm_mon
@@ -145,6 +149,8 @@ def firstDay_lastDay(
     获取指定时间的月份第一天和最后一天日期
     :return:
     """
+    if dt is None:
+        dt = day_now(infmt)
     year = time.strptime(dt, infmt).tm_year
     month = time.strptime(dt, infmt).tm_mon
     firstDayWeekDay, monthRange = calendar.monthrange(year, month)  # 第一天的星期和当月的总天数
@@ -160,6 +166,8 @@ def get_before_month(
     获取指定时间的上一个年月
     :return:
     """
+    if dt is None:
+        dt = day_now(infmt)
     year = time.strptime(dt, infmt).tm_year
     month = time.strptime(dt, infmt).tm_mon
     before_month = (date(year=year, month=month, day=1) + timedelta(days=-1)).strftime(outfmt)
@@ -173,6 +181,8 @@ def get_next_month(
     获取指定时间的下一个年月
     :return:
     """
+    if dt is None:
+        dt = day_now(infmt)
     year = time.strptime(dt, infmt).tm_year
     month = time.strptime(dt, infmt).tm_mon
     firstDayWeekDay, monthRange = calendar.monthrange(year, month)  # 第一天的星期和当月的总天数
@@ -187,12 +197,16 @@ def get_day_range(
     获取获取两个日期之间的所有日期
     :return:
     """
-    dt1 = datetime.strptime(dt1, infmt)
-    dt2 = datetime.strptime(dt2, infmt)
-    delta = dt2 - dt1
+    if dt1 is None:
+        dt1 = day_now(infmt)
+    if dt2 is None:
+        dt2 = day_now(infmt)
+    start_day = datetime.strptime(dt1, infmt)
+    end_day = datetime.strptime(dt2, infmt)
+    delta = end_day - start_day
     date_range: List[str] = []
     for i in range(delta.days + 1):
-        dt = (dt1 + timedelta(i)).strftime(outfmt)
+        dt = (start_day + timedelta(i)).strftime(outfmt)
         date_range.append(dt)
     return date_range
 
@@ -204,6 +218,10 @@ def get_month_range(
     获取获取两个日期之间的所有年月
     :return:
     """
+    if dt1 is None:
+        dt1 = day_now(infmt)
+    if dt2 is None:
+        dt2 = day_now(infmt)
     start_day = datetime.strptime(dt1, infmt)
     end_day = datetime.strptime(dt2, infmt)
 
@@ -225,6 +243,10 @@ def get_year_range(
     获取获取两个日期之间的所有年月
     :return:
     """
+    if dt1 is None:
+        dt1 = day_now(infmt)
+    if dt2 is None:
+        dt2 = day_now(infmt)
     start_day = datetime.strptime(dt1, infmt)
     end_day = datetime.strptime(dt2, infmt)
 
@@ -275,6 +297,10 @@ def get_comp_seconds(
     获取两个日期之间的时间差，单位秒
     :return: 返回周一的日期
     """
+    if dt1 is None:
+        dt1 = day_now(infmt)
+    if dt2 is None:
+        dt2 = day_now(infmt)
     d1 = datetime.strptime(dt1, infmt)
     d2 = datetime.strptime(dt2, infmt)
     seconds = (d2 - d1).total_seconds()

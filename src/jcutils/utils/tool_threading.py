@@ -7,6 +7,7 @@
 """
 
 import time
+from collections.abc import Sequence
 from threading import Thread
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar
 
@@ -57,7 +58,7 @@ class MyThread(Thread):
             return None
 
 
-def run_threads(funcs_args: List[Tuple[Callable[..., T], Tuple[Any, ...], Optional[Dict[str, Any]]]]) -> List[Any]:
+def run_threads(funcs_args: Sequence[Tuple[Callable[..., T], Tuple[Any, ...], Optional[Dict[str, Any]]]]) -> List[Any]:
     """
     并行执行多个函数
 

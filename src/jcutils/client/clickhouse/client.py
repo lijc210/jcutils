@@ -11,8 +11,8 @@ import os
 from typing import Any, Dict, Generator, Optional, Sequence, Tuple, Union
 
 try:
-    from clickhouse_driver import connect  # type: ignore
-    from clickhouse_driver.dbapi.extras import DictCursor  # type: ignore
+    from clickhouse_driver import connect
+    from clickhouse_driver.dbapi.extras import DictCursor
 except ModuleNotFoundError:
     raise ImportError("请先安装：pip install clickhouse-driver or uv add clickhouse-driver")
 except Exception as e:

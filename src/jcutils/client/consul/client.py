@@ -18,7 +18,7 @@ import io
 from typing import List, Optional, Tuple
 
 try:
-    import consul  # type: ignore
+    import consul
 except ModuleNotFoundError:
     raise ImportError("请先安装：pip install python-consul2 or uv add python-consul2")
 except Exception as e:

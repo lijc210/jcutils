@@ -5,7 +5,7 @@ from typing import Callable, Optional
 from dotenv import dotenv_values
 
 try:
-    from v2.nacos import (  # type: ignore
+    from v2.nacos import (
         ClientConfigBuilder,
         ConfigParam,
         GRPCConfig,
@@ -54,6 +54,7 @@ class AsyncNacosClient:
             raise ValueError("data_id 和 group 必须提供")
 
         await self._ensure_client()
+        assert self._client is not None
         raw = await self._client.get_config(
             ConfigParam(
                 data_id=data_id,
@@ -81,6 +82,7 @@ class AsyncNacosClient:
             raise ValueError("data_id 和 group 必须提供")
 
         await self._ensure_client()
+        assert self._client is not None
         await self._client.add_listener(
             data_id,
             group,

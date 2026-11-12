@@ -11,7 +11,7 @@ from collections import defaultdict
 from functools import wraps
 from typing import Any, Callable, Dict, List, Optional, Tuple, TypeVar
 
-from func_timeout import FunctionTimedOut, func_timeout
+from func_timeout import FunctionTimedOut, func_timeout  # ty: ignore[import-not-found]
 
 T = TypeVar("T")
 
@@ -46,8 +46,12 @@ def run_time_log(
                     result: T = func_timeout(stop_time, function, args=args, kwargs=kwargs)
                 except FunctionTimedOut:
                     if logger:
-                        logger.warning("{}函数未在{}秒内完成，将强制停止".format(function.__name__, stop_time))
-                    return stop_return  # type: ignore
+                        logger.warning(
+                            "{}函数未在{}秒内完成，将强制停止".format(
+                                getattr(function, "__name__", type(function).__name__), stop_time
+                            )
+                        )
+                    return stop_return
             else:
                 result = function(*args, **kwargs)
             t1: float = time.time()
@@ -55,7 +59,11 @@ def run_time_log(
             if cost_time > thr_time:  # 大于多少秒的，则记录下来
                 # print args,kwargs
                 if logger:
-                    logger.warning("{}\t{}\n{}\t{}".format(function.__name__, cost_time, args, kwargs))
+                    logger.warning(
+                        "{}\t{}\n{}\t{}".format(
+                            getattr(function, "__name__", type(function).__name__), cost_time, args, kwargs
+                        )
+                    )
             return result
 
         return wrapped_function
@@ -145,7 +153,7 @@ if __name__ == "__main__":
     #####run_time_log#####
     # 注意：这里需要根据实际项目调整导入路径
     try:
-        from utils.logging_ import FileHandler_
+        from jcutils.utils.logging_ import FileHandler_  # ty: ignore[import-not-found]
     except ImportError:
         # 如果导入失败，创建一个简单的logger用于测试
         import logging

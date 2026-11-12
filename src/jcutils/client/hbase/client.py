@@ -12,6 +12,7 @@ except Exception as e:
     raise ImportError(f"happybase 导入失败: {e}")
 
 import logging
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -142,11 +143,13 @@ class HbaseClient:
             table = conn.table(table_name)
             table.put(key, data)
 
-    def batch_put(self, table_name=None, key_data_dict=None):
+    def batch_put(self, table_name=None, key_data_dict: Optional[Dict[str, Any]] = None):
         """
         批量提交数据
         :return:
         """
+        if key_data_dict is None:
+            return
         with self.conn() as conn:
             table = conn.table(table_name)
             with table.batch() as bat:

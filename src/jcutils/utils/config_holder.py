@@ -2,17 +2,17 @@ import asyncio
 import logging
 import os
 
-from src.jcutils.utils.nacos_client import NacosClient
+from jcutils.client.nacos.client import NacosClient
 
 from .config_loader import ConfigLoader
 
 logger = logging.getLogger(__name__)
 
-nacos_config = ConfigLoader.load_config()
+config_holder = ConfigLoader.load_config()
 
 
-async def config_listener(tenant, data_id, group, content):
-    config_dict = ConfigLoader._merge_with_env(nacos_config)
+def config_listener(tenant, data_id, group, content):
+    config_dict = ConfigLoader._merge_with_env(ConfigLoader._config_dict)
     logger.info("配置已更新: tenant=%s, data_id=%s, group=%s", tenant, data_id, group)
 
 

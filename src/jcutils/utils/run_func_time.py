@@ -26,7 +26,7 @@ def run_time(function: Callable[..., T]) -> Callable[..., T]:
         t0: float = time.time()
         result: T = function(*args, **kwargs)
         t1: float = time.time()
-        logger.info("%s: %s seconds", function.__name__, str(t1 - t0))
+        logger.info("%s: %s seconds", getattr(function, "__name__", type(function).__name__), str(t1 - t0))
         return result
 
     return wrapped_function

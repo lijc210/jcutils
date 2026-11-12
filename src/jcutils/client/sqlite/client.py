@@ -9,7 +9,7 @@ SQLite3 连接客户端，内部使用 with 上下文管理器自动管理连接
 
 import logging
 import sqlite3
-from typing import Any, Dict, Generator, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Generator, List, Literal, Optional, Sequence, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class Sqlite3Client:
         self,
         db_path: str,
         cursorclass: str = "tuple",
-        isolation_level: Optional[str] = None,
+        isolation_level: Optional[Literal["DEFERRED", "IMMEDIATE", "EXCLUSIVE"]] = None,
         check_same_thread: bool = False,
     ) -> None:
         """
@@ -293,7 +293,7 @@ if __name__ == "__main__":
     print("fetch_iter:", count)
 
     # 兼容旧版 API
-    results = sqlite3_client.query("SELECT * FROM COMPANY")
+    results = sqlite3_client.fetchall("SELECT * FROM COMPANY")
     print("query count:", len(results))
 
     # 使用 tuple 游标

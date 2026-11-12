@@ -64,7 +64,7 @@ def api_geocode_and_print(location: str, city: Optional[str] = None) -> None:
         print("请求失败")
 
 
-def parse_coordinates(location_str: str) -> Tuple[str, ...]:
+def parse_coordinates(location_str: str) -> Tuple[Tuple[str, ...], ...]:
     """
     解析坐标字符串，返回经纬度元组列表
 

@@ -37,12 +37,16 @@ def get_day_range(
     :param outfmt: 输出日期格式
     :return: 日期列表
     """
-    dt1 = datetime.strptime(dt1, infmt)
-    dt2 = datetime.strptime(dt2, infmt)
-    delta = dt2 - dt1
+    if dt1 is None:
+        dt1 = datetime.now().strftime(infmt)
+    if dt2 is None:
+        dt2 = datetime.now().strftime(infmt)
+    start_day = datetime.strptime(dt1, infmt)
+    end_day = datetime.strptime(dt2, infmt)
+    delta = end_day - start_day
     date_range: List[str] = []
     for i in range(delta.days + 1):
-        dt = (dt1 + timedelta(i)).strftime(outfmt)
+        dt = (start_day + timedelta(i)).strftime(outfmt)
         date_range.append(dt)
     return date_range
 

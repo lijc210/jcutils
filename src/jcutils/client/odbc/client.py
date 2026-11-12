@@ -10,7 +10,7 @@ SQL Server ODBC 连接客户端，内部使用 with 上下文管理器自动管�
 from typing import Any, Dict, Generator, List, Optional, Sequence, Tuple, Union
 
 try:
-    import pyodbc  # type: ignore
+    import pyodbc
 except ModuleNotFoundError:
     raise ImportError('请先安装：pip install pyodbc or uv add "pyodbc"')
 except Exception as e:

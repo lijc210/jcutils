@@ -7,7 +7,7 @@ Desc: HTML标签去除和文本分句工具
 import re
 from typing import List
 
-from pyquery import PyQuery as pq
+from pyquery import PyQuery as pq  # ty: ignore[import-not-found]
 
 
 class HTMLStrip:

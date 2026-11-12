@@ -18,22 +18,22 @@ class DateEncoder(json.JSONEncoder):
     支持datetime.datetime、datetime.date、datetime.time等类型
     """
 
-    def default(self, obj: Any) -> Any:
+    def default(self, o: Any) -> Any:
         """
         重写JSONEncoder的default方法，处理特殊类型的序列化
 
-        :param obj: 要序列化的对象
+        :param o: 要序列化的对象
         :return: JSON可序列化的对象
         :raises TypeError: 如果对象类型无法被序列化
         """
-        if isinstance(obj, datetime.datetime):
-            return obj.strftime("%Y-%m-%d %H:%M:%S")
-        elif isinstance(obj, datetime.date):
-            return obj.strftime("%Y-%m-%d")
-        elif isinstance(obj, datetime.time):
-            return obj.strftime("%H:%M:%S")
+        if isinstance(o, datetime.datetime):
+            return o.strftime("%Y-%m-%d %H:%M:%S")
+        elif isinstance(o, datetime.date):
+            return o.strftime("%Y-%m-%d")
+        elif isinstance(o, datetime.time):
+            return o.strftime("%H:%M:%S")
         else:
-            return json.JSONEncoder.default(self, obj)
+            return json.JSONEncoder.default(self, o)
 
 
 if __name__ == "__main__":

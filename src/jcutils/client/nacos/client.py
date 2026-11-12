@@ -18,7 +18,7 @@ from typing import Callable, Optional
 from dotenv import dotenv_values
 
 try:
-    from v2.nacos import (  # type: ignore
+    from v2.nacos import (
         ClientConfigBuilder,
         ConfigParam,
         GRPCConfig,

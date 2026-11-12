@@ -106,6 +106,13 @@ dev = [
 [tool.ty.environment]
 extra-paths = ["src"]
 
+# 客户端模块的后端依赖均为可选安装，类型检查时不要求本地已安装
+[[tool.ty.overrides]]
+include = ["src/jcutils/client/**"]
+
+[tool.ty.overrides.rules]
+import-not-found = "ignore"
+
 [tool.maturin]
 module-name = "jcutils._core"
 python-packages = ["jcutils"]

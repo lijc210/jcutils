@@ -8,7 +8,7 @@ import time
 from functools import wraps
 from typing import Any, Callable, TypeVar
 
-from line_profiler import LineProfiler
+from line_profiler import LineProfiler  # ty: ignore[import-not-found]
 
 T = TypeVar("T")
 

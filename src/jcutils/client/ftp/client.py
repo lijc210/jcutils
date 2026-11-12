@@ -6,17 +6,18 @@
 """
 
 from ftplib import FTP
+from typing import List
 
 
 class FtpClient:
-    def __init__(self, host=None, port=None, username=None, password=None):
+    def __init__(self, host: str = "", port: int = 21, username: str = "", password: str = "") -> None:
         self.host = host
         self.port = port
         self.username = username
         self.password = password
         self.ftp = self.connect()
 
-    def connect(self):
+    def connect(self) -> FTP:
         ftp = FTP()
         # 打开调试级别2，显示详细信息
         # ftp.set_debuglevel(2)
@@ -24,7 +25,7 @@ class FtpClient:
         ftp.login(self.username, self.password)
         return ftp
 
-    def nlst(self):
+    def nlst(self) -> List[str]:
         """
         返回目录下的文件
         :param hdfs_path:
@@ -32,7 +33,7 @@ class FtpClient:
         """
         return self.ftp.nlst()
 
-    def download(self, remote_path=None, local_path=None):
+    def download(self, remote_path: str, local_path: str) -> None:
         """
         从ftp下载文件
         :param remote_path:
@@ -46,7 +47,7 @@ class FtpClient:
         self.ftp.set_debuglevel(0)  # 参数为0，关闭调试模式
         fp.close()
 
-    def upload(self, local_path=None, remote_path=None):
+    def upload(self, local_path: str, remote_path: str) -> None:
         """
         上传
         :param hdfs_path:

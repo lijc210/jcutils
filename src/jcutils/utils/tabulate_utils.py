@@ -8,7 +8,7 @@
 
 from typing import Any, Dict, List, Sequence, Union
 
-import tabulate
+import tabulate  # ty: ignore[import-not-found]
 
 tabulate.WIDE_CHARS_MODE = True
 

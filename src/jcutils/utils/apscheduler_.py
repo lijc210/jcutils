@@ -8,7 +8,7 @@
 
 from typing import Optional
 
-from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.cron import CronTrigger  # ty: ignore[import-not-found]
 
 
 class my_CronTrigger(CronTrigger):

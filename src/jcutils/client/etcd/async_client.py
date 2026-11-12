@@ -9,8 +9,8 @@ from typing import Callable, List, Optional, Tuple
 from dotenv import dotenv_values
 
 try:
-    from aetcd import Client as AetcdClient  # type: ignore
-    from aetcd.utils import to_bytes  # type: ignore
+    from aetcd import Client as AetcdClient
+    from aetcd.utils import to_bytes
 except ModuleNotFoundError:
     raise ImportError("请先安装：pip install aetcd or uv add aetcd")
 except Exception as e:
@@ -57,6 +57,7 @@ class AsyncEtcdClient:
             raise ValueError("key 必须提供")
 
         await self._ensure_client()
+        assert self._client is not None
         result = await self._client.get(to_bytes(key))
         if result is None:
             raise ValueError(f"Etcd 配置为空: key={key}")
@@ -83,6 +84,7 @@ class AsyncEtcdClient:
             raise ValueError("key_prefix 必须提供")
 
         await self._ensure_client()
+        assert self._client is not None
         result = await self._client.get_prefix(to_bytes(key_prefix))
         items: List[Tuple[str, str]] = []
         for kv in result:
@@ -105,6 +107,7 @@ class AsyncEtcdClient:
             raise ValueError("key 必须提供")
 
         await self._ensure_client()
+        assert self._client is not None
 
         watch = await self._client.watch(to_bytes(key))
         self._watchers.append(watch)
@@ -135,6 +138,7 @@ class AsyncEtcdClient:
             raise ValueError("key 必须提供")
 
         await self._ensure_client()
+        assert self._client is not None
         await self._client.put(to_bytes(key), to_bytes(value), lease=lease)
 
     async def delete(self, key: str):
@@ -143,6 +147,7 @@ class AsyncEtcdClient:
             raise ValueError("key 必须提供")
 
         await self._ensure_client()
+        assert self._client is not None
         await self._client.delete(to_bytes(key))
 
     async def shutdown(self):

@@ -18,7 +18,7 @@ except Exception as e:
     raise ImportError(f"pymssql 导入失败: {e}")
 
 try:
-    from dbutils.pooled_db import PooledDB  # type: ignore
+    from dbutils.pooled_db import PooledDB
 except ModuleNotFoundError:
     raise ImportError("请先安装：pip install DBUtils or uv add DBUtils")
 except Exception as e:
