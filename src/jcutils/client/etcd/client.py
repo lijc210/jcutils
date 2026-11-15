@@ -1,9 +1,9 @@
 import io
 import threading
 import time
+from http import HTTPStatus
 from typing import Callable, Optional, TypeVar
 
-import requests
 from dotenv import dotenv_values
 
 try:
@@ -23,8 +23,8 @@ class EtcdClient:
 
     支持 etcd v3 的用户名密码认证：
     构造时传入 ``username`` / ``password`` 后，客户端会先调用
-    ``/v3/auth/authenticate`` 获取 token，并将 token 写入底层
-    requests.Session 的 ``Authorization`` 请求头，后续所有请求自动携带。
+    ``/v3/auth/authenticate`` 获取 token，并将 token 写入底层 HTTP 会话的
+    ``Authorization`` 请求头，后续所有请求自动携带。
     """
 
     def __init__(
@@ -62,29 +62,11 @@ class EtcdClient:
     def _build_client(self) -> Etcd3Client:
         """创建底层 Etcd3Client。
 
-        etcd3gw 原生不支持用户名密码认证，需要认证时为其注入自定义的
-        requests.Session，认证 token 通过 session 级请求头下发。
+        etcd3gw 会自行创建并配置 HTTP 会话（含 ca_cert / 客户端证书），
+        认证 token 后续直接写入该会话的请求头，无需外部注入。
         """
-        if self._username is None and self._password is None:
-            return Etcd3Client(
-                host=self._host,
-                port=self._port,
-                protocol=self._protocol,
-                ca_cert=self._ca_cert,
-                cert_key=self._cert_key,
-                cert_cert=self._cert_cert,
-                timeout=self._timeout,
-                api_path=self._api_path,
-            )
-
-        if self._username is None or self._password is None:
+        if self._is_authenticated() and (self._username is None or self._password is None):
             raise ValueError("username 和 password 必须同时提供")
-
-        session = requests.Session()
-        if self._ca_cert is not None:
-            session.verify = self._ca_cert
-        if self._cert_cert is not None and self._cert_key is not None:
-            session.cert = (self._cert_cert, self._cert_key)
 
         return Etcd3Client(
             host=self._host,
@@ -95,7 +77,6 @@ class EtcdClient:
             cert_cert=self._cert_cert,
             timeout=self._timeout,
             api_path=self._api_path,
-            session=session,
         )
 
     def _ensure_client(self) -> Etcd3Client:
@@ -119,9 +100,10 @@ class EtcdClient:
         payload = {"name": self._username, "password": self._password}
         try:
             response = client.session.post(url, json=payload, timeout=client.timeout)
-        except requests.exceptions.RequestException as e:
+        except OSError as e:
+            # requests 的 RequestException 继承自 IOError，无需依赖 requests 即可捕获
             raise Etcd3Exception(f"Etcd 认证请求失败: {e}")
-        if response.status_code != requests.codes["ok"]:
+        if response.status_code != HTTPStatus.OK:
             raise Etcd3Exception(
                 f"Etcd 认证失败: status={response.status_code}, reason={response.reason}, text={response.text}",
             )
