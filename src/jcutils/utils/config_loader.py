@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING
 from dotenv import dotenv_values, load_dotenv
 
 from ..client import ConsulClient, EtcdClient, NacosClient
+from .logging_ import configure_logging, parse_log_level
 
 try:
     from pyapollo.client import ApolloClient  # type: ignore
@@ -35,6 +36,32 @@ load_dotenv(override=False)
 
 
 logger = logging.getLogger(__name__)
+
+
+def _setup_logging() -> None:
+    """
+    初始化本模块日志输出（默认 INFO，安装即可见）。
+
+    - 用 LOG_LEVEL 覆盖，如 DEBUG、WARNING；未设置时默认 INFO
+    - 设为 OFF/NONE/DISABLE 时不做任何初始化，完全交给使用方的 logging 配置
+    - 使用方已配置 logging（root 或本 logger 已有 handler）时只同步级别，
+      不重复添加 handler，日志经 propagate 由使用方统一输出
+    """
+    level = parse_log_level()
+    if level is None:
+        return
+
+    logger.setLevel(level)
+
+    # 使用方已配置 logging 时跟随其配置，不重复添加 handler
+    if logger.handlers or logging.getLogger().handlers:
+        return
+
+    # 未配置过 logging 的使用方：自带控制台 handler，保证默认可见
+    configure_logging(log_level=level, name=__name__, propagate=False)
+
+
+_setup_logging()
 
 
 class ConfigLoader:

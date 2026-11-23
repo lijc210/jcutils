@@ -6,5 +6,6 @@
 """
 
 from .config_loader import ConfigLoader
+from .logging_ import configure_logging, parse_log_level
 
-__all__ = ["ConfigLoader"]
+__all__ = ["ConfigLoader", "configure_logging", "parse_log_level"]
