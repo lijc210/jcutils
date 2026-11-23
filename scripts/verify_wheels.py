@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import io
 import sys
 import zipfile
 from pathlib import Path
@@ -11,10 +13,8 @@ from pathlib import Path
 EOCD = b"PK\x05\x06"
 
 
-def check(path: Path) -> str | None:
-    """校验单个 wheel，返回错误信息；None 表示通过。"""
-    data = path.read_bytes()
-
+def check(data: bytes) -> str | None:
+    """校验 wheel 的 ZIP 结构，返回错误信息；None 表示通过。"""
     pos = data.rfind(EOCD)
     if pos < 0:
         return "找不到 ZIP 结尾记录（EOCD）"
@@ -25,7 +25,7 @@ def check(path: Path) -> str | None:
         return f"末尾有多余数据 {trailing} 字节"
 
     try:
-        with zipfile.ZipFile(path) as zf:
+        with zipfile.ZipFile(io.BytesIO(data)) as zf:
             broken = zf.testzip()
     except zipfile.BadZipFile as exc:
         return f"ZIP 结构损坏: {exc}"
@@ -51,12 +51,16 @@ def main(argv: list[str]) -> int:
 
     failures = 0
     for path in paths:
-        error = check(path)
+        data = path.read_bytes()
+        digest = hashlib.sha256(data).hexdigest()
+        error = check(data)
         if error is None:
-            print(f"OK   {path}")
+            print(f"OK   {path}  size={len(data)}  sha256={digest}")
         else:
             failures += 1
             print(f"FAIL {path}: {error}")
+            # 打印末尾字节，便于判断多出来的是换行符、填充字节还是别的内容
+            print(f"     size={len(data)}  sha256={digest}  tail={data[-32:].hex()}")
 
     return 1 if failures else 0
 
