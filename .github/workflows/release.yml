@@ -93,7 +93,7 @@ jobs:
       - uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -i ${{ matrix.interpreter }}
+          args: --release --out dist -i ${{ matrix.interpreter }} --no-default-features --features abi3t
           manylinux: ${{ matrix.manylinux }}
       - name: Verify wheel archives
         run: python scripts/verify_wheels.py dist
@@ -153,7 +153,7 @@ jobs:
       - uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.target }}
-          args: --release --out dist -i ${{ matrix.interpreter }}
+          args: --release --out dist -i ${{ matrix.interpreter }} --no-default-features --features abi3t
           manylinux: ${{ matrix.manylinux }}
 
       - name: Verify wheel archives

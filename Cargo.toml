@@ -12,9 +12,16 @@ crate-type = ["cdylib"]
 
 [dependencies]
 # "extension-module" tells pyo3 we want to build an extension module (skips linking against libpython.so)
-# "abi3-py310" builds using the stable ABI with minimum Python version 3.10 (non-free-threaded)
-# "abi3t-py315" builds using the free-threaded stable ABI (PEP 803) with minimum Python version 3.15
-# When building with free-threaded Python 3.14t, abi3t falls back to version-specific (cp314-cp314t)
-# When building with free-threaded Python 3.15t+, abi3t produces forward-compatible abi3t wheels
-pyo3 = { version = "0.29", features = ["extension-module", "abi3-py310", "abi3t-py315"] }
+pyo3 = { version = "0.29", features = ["extension-module"] }
 chrono = "0.4"
+
+[features]
+# 两种稳定 ABI 必须二选一，不能同时启用：
+# - abi3  (默认)：非 free-threaded 的稳定 ABI，最低 Python 3.10，产出 cp310-abi3 wheel
+# - abi3t：free-threaded 的稳定 ABI (PEP 803)，最低 Python 3.15，产出 cp315-abi3.abi3t wheel
+#
+# 同时启用会让 pyo3 整体按 abi3t 处理，在 manylinux 容器这类存在多个解释器的环境里，
+# 非 free-threaded 的 3.10~3.14 会退回版本专属 wheel（cp310-cp310 等），既重复又不覆盖未来的 Python 版本。
+default = ["abi3"]
+abi3 = ["pyo3/abi3-py310"]
+abi3t = ["pyo3/abi3t-py315"]
