@@ -10,6 +10,9 @@ target/
 # venv
 .venv
 
+# local env
+.env
+
 htmlcov
 .coverage
 .pytest_cache
