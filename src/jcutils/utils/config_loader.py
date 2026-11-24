@@ -81,7 +81,7 @@ class ConfigLoader:
         """将配置写入系统临时目录缓存"""
         try:
             cache_file.write_text(json.dumps(config, ensure_ascii=False), encoding="utf-8")
-            logger.debug("[config] 缓存已写入: %s", cache_file)
+            logger.info("[config] 缓存已写入: %s", cache_file)
         except Exception as e:
             logger.warning("[config] 缓存写入失败（忽略）: %s", e)
 
@@ -92,9 +92,9 @@ class ConfigLoader:
             if cache_file.exists():
                 age = time.time() - cache_file.stat().st_mtime
                 if age < cls.CACHE_TTL:
-                    logger.debug("[config] 使用本地缓存（%ss 前，TTL=%ss）: %s", int(age), cls.CACHE_TTL, cache_file)
+                    logger.info("[config] 使用本地缓存（%ss 前，TTL=%ss）: %s", int(age), cls.CACHE_TTL, cache_file)
                     return json.loads(cache_file.read_text(encoding="utf-8"))
-                logger.debug("[config] 缓存已过期（%ss > %ss），重新拉取", int(age), cls.CACHE_TTL)
+                logger.info("[config] 缓存已过期（%ss > %ss），重新拉取", int(age), cls.CACHE_TTL)
         except Exception as e:
             logger.warning("[config] 读取缓存失败（忽略）: %s", e)
         return None
@@ -443,7 +443,7 @@ class ConfigLoader:
             with open(cls.SCHEMA_PATH, "r", encoding="utf-8") as f:
                 existing_content = f.read()
             if existing_content == new_content:
-                logger.debug("[config] schema.py 无变化，跳过生成")
+                logger.info("[config] schema.py 无变化，跳过生成")
             else:
                 logger.info("[config] schema.py 已变化，更新生成")
                 with open(cls.SCHEMA_PATH, "w", encoding="utf-8") as f:
