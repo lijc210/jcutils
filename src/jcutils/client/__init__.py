@@ -78,6 +78,7 @@ def _lazy_import(module_path, class_names):
 (KafkaClient,) = _lazy_import(".kafka.client", ["KafkaClient"])
 (LdapClient,) = _lazy_import(".ldap.client", ["LdapClient"])
 (MaxComputeClient,) = _lazy_import(".maxcompute.client", ["MaxComputeClient"])
+(AmapClient, AmapError) = _lazy_import(".amap.client", ["AmapClient", "AmapError"])
 (MongoClient,) = _lazy_import(".mongo.client", ["MongoClient"])
 (MsSqlClient,) = _lazy_import(".mssql.client", ["MsSqlClient"])
 (AsyncMySQLClient,) = _lazy_import(".mysql.async_client", ["AsyncMySQLClient"])
@@ -138,4 +139,6 @@ __all__ = [
     "NacosClient",
     "ConsulClient",
     "AsyncConsulClient",
+    "AmapClient",
+    "AmapError",
 ]

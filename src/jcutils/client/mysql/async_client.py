@@ -7,6 +7,7 @@ MySQL 异步连接池客户端，内部使用 async with 上下文管理器自�
 支持普通查询和流式查询两种独立的连接池
 """
 
+import os
 from typing import Any, AsyncGenerator, Dict, List, Optional, Sequence, Tuple, Union
 
 try:
@@ -327,13 +328,13 @@ class AsyncMySQLClient:
 if __name__ == "__main__":
 
     async def main():
-        # 创建连接池客户端
+        # 连接信息通过环境变量提供，避免把主机/账号/密码写进代码
         mysql_client = AsyncMySQLClient(
-            host="10.10.11.244",
-            user="biuser",
-            passwd="@biuser123",
-            db="userdata",
-            port=3309,
+            host=os.getenv("MYSQL_HOST", "127.0.0.1"),
+            user=os.getenv("MYSQL_USER", ""),
+            passwd=os.getenv("MYSQL_PASSWORD", ""),
+            db=os.getenv("MYSQL_DB", ""),
+            port=int(os.getenv("MYSQL_PORT", "3306")),
         )
 
         try:

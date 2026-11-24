@@ -8,6 +8,7 @@ https://open.dingtalk.com/document/orgapp/dingtalk-openapi-overview
 
 import json
 import logging
+import os
 
 import requests
 from retry import retry
@@ -171,6 +172,6 @@ class Dingtalk:
 
 
 if __name__ == "__main__":
-    corpid = "xxxx"
-    corpsecret = "OQq7kn5qa3Tmn5H0_YUxeOfmbQ4wG2Mi3f7Qv-nTNLuDD8POP7iDSbeU6LxDxxxx"
+    corpid = os.getenv("DINGTALK_CORP_ID", "")
+    corpsecret = os.getenv("DINGTALK_CORP_SECRET", "")
     dingtalk = Dingtalk(corpid=corpid, corpsecret=corpsecret)
