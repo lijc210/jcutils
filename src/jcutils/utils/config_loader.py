@@ -13,9 +13,10 @@ import logging
 import os
 import sys
 import tempfile
+import threading
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from dotenv import dotenv_values, load_dotenv
 
@@ -31,8 +32,15 @@ if TYPE_CHECKING:
     from schema import AppConfig  # 只有 IDE/类型检查时才执行，运行时跳过
 
 
+# .env 会在导入时被 load_dotenv 写入 os.environ，这里先记录这些「副本」：
+# 之后重新读取 .env 时，副本不应覆盖文件里的新值（真实的进程环境变量仍然优先）
+_DOTENV_INJECTED = {k: v for k, v in dotenv_values(".env").items() if v is not None and k not in os.environ}
+
 # 先加载 .env（不覆盖已有环境变量）
 load_dotenv(override=False)
+
+# 末参哨兵：区分「没传 default」和「显式传了 default=None」
+_MISSING = object()
 
 
 logger = logging.getLogger(__name__)
@@ -67,9 +75,18 @@ _setup_logging()
 class ConfigLoader:
     """配置加载器"""
 
-    _config_dict = {}
+    _config_dict: dict = {}
+    # 归一化 key -> (原始 key, 值)，供动态读取使用，刷新时整体替换
+    _dynamic_index: dict[str, tuple[str, Any]] = {}
+    # load_config(init_dirs=True) 注入的派生配置项，动态刷新时需要保留
+    _injected_keys: set[str] = set()
+    _snapshot_at: float = 0.0  # 快照时间点（time.monotonic）
+    _refresh_lock = threading.Lock()
+
     SCHEMA_PATH = os.path.join(os.getcwd(), "schema.py")
     CACHE_TTL = 300  # 秒，5分钟
+    # 动态读取的刷新间隔：进程内每 TTL 秒最多回源一次；设为 0 表示每次读取都回源
+    DYNAMIC_TTL = int(os.getenv("CONFIG_DYNAMIC_TTL") or CACHE_TTL)
 
     @staticmethod
     def _get_cache_file(source: str, app_id: str) -> Path:
@@ -138,8 +155,17 @@ class ConfigLoader:
 
     @staticmethod
     def _merge_with_env(source_config: dict) -> dict:
-        """只用环境变量覆盖配置源中已有的 key，避免系统环境变量污染业务配置"""
-        return {k: os.environ.get(k, v) for k, v in source_config.items()}
+        """只用环境变量覆盖配置源中已有的 key，避免系统环境变量污染业务配置
+
+        启动时由 load_dotenv 从 .env 注入 os.environ 的副本不算环境变量，
+        否则 .env 被修改后，重新读取也只会拿到启动时的旧值。
+        """
+        merged = dict(source_config)
+        for k in source_config:
+            env_value = os.environ.get(k)
+            if env_value is not None and _DOTENV_INJECTED.get(k) != env_value:
+                merged[k] = env_value
+        return merged
 
     @classmethod
     def _load_from_nacos(cls) -> dict:
@@ -509,13 +535,8 @@ class ConfigLoader:
         return data_dir, log_dir
 
     @classmethod
-    def load_config(cls, init_dirs: bool = False) -> AppConfig:
-        """
-        根据 CONFIG_SOURCE 判断配置来源：
-        - nacos  → 从 Nacos 拉取，再合并环境变量
-        - apollo → 从 Apollo 拉取，再合并环境变量
-        - local（默认）→ 从 .env 读取，再合并环境变量
-        """
+    def _fetch_source_config(cls) -> dict:
+        """按 CONFIG_SOURCE 回源拉取配置（不修改内存快照）"""
         CONFIG_SOURCE = os.getenv("CONFIG_SOURCE", "local").lower()
         ENV = os.getenv("ENV", "dev").lower()
         APP_ID = os.getenv("APP_ID", "")
@@ -526,17 +547,71 @@ class ConfigLoader:
 
         # local 模式不需要缓存（本地 .env 读取极快）
         if CONFIG_SOURCE == "nacos":
-            config_dict = cls._load_remote_with_fallback(cls._load_from_nacos, CONFIG_SOURCE, APP_ID)
-        elif CONFIG_SOURCE == "apollo":
-            config_dict = cls._load_remote_with_fallback(cls._load_from_apollo, CONFIG_SOURCE, APP_ID)
-        elif CONFIG_SOURCE == "consul":
-            config_dict = cls._load_remote_with_fallback(cls._load_from_consul, CONFIG_SOURCE, APP_ID)
-        elif CONFIG_SOURCE == "etcd":
-            config_dict = cls._load_remote_with_fallback(cls._load_from_etcd, CONFIG_SOURCE, APP_ID)
-        else:
-            config_dict = cls._load_from_local()
+            return cls._load_remote_with_fallback(cls._load_from_nacos, CONFIG_SOURCE, APP_ID)
+        if CONFIG_SOURCE == "apollo":
+            return cls._load_remote_with_fallback(cls._load_from_apollo, CONFIG_SOURCE, APP_ID)
+        if CONFIG_SOURCE == "consul":
+            return cls._load_remote_with_fallback(cls._load_from_consul, CONFIG_SOURCE, APP_ID)
+        if CONFIG_SOURCE == "etcd":
+            return cls._load_remote_with_fallback(cls._load_from_etcd, CONFIG_SOURCE, APP_ID)
+        return cls._load_from_local()
 
-        cls._config_dict = config_dict
+    @classmethod
+    def _set_config(cls, config: dict) -> None:
+        """整体替换内存快照（单次赋值，读方不会看到半成品）"""
+        cls._config_dict = config
+        cls._dynamic_index = {cls._format_key(k): (k, v) for k, v in config.items()}
+        cls._snapshot_at = time.monotonic()
+
+    @classmethod
+    def _refresh_snapshot(cls) -> None:
+        """按 DYNAMIC_TTL 刷新内存快照
+
+        - TTL 内直接复用，不产生任何 IO
+        - 已有其他线程在刷新时不阻塞，继续使用旧快照
+        - 回源失败时保留旧快照，不会把调用方的请求打挂
+        """
+        if cls._snapshot_at and time.monotonic() - cls._snapshot_at < cls.DYNAMIC_TTL:
+            return
+        # 冷启动（还没有任何快照）时阻塞等待，避免并发请求拿到空快照；
+        # 有快照时不阻塞，用旧值先响应，不让请求等配置中心
+        if not cls._refresh_lock.acquire(blocking=not cls._snapshot_at):
+            return
+
+        try:
+            # 拿到锁后二次确认，避免并发线程重复回源
+            if cls._snapshot_at and time.monotonic() - cls._snapshot_at < cls.DYNAMIC_TTL:
+                return
+
+            try:
+                config = cls._fetch_source_config()
+            except Exception as e:
+                # 失败也让 TTL 生效，避免每个请求都去捶配置中心
+                cls._snapshot_at = time.monotonic()
+                logger.warning("[config] 动态刷新失败，沿用内存中的旧配置: %s", e)
+                return
+
+            # 派生配置（DATA_DIR/LOGS_DIR 等）不在配置源里，刷新时保留
+            for k in cls._injected_keys:
+                if k in cls._config_dict and k not in config:
+                    config[k] = cls._config_dict[k]
+
+            cls._set_config(config)
+            logger.info("[config] 动态配置已刷新，共 %s 项", len(config))
+        finally:
+            cls._refresh_lock.release()
+
+    @classmethod
+    def load_config(cls, init_dirs: bool = False) -> AppConfig:
+        """
+        根据 CONFIG_SOURCE 判断配置来源：
+        - nacos  → 从 Nacos 拉取，再合并环境变量
+        - apollo → 从 Apollo 拉取，再合并环境变量
+        - consul → 从 Consul KV 拉取，再合并环境变量
+        - etcd   → 从 etcd KV 拉取，再合并环境变量
+        - local（默认）→ 从 .env 读取，再合并环境变量
+        """
+        config_dict = cls._fetch_source_config()
 
         if init_dirs:
             # 按需创建目录
@@ -547,6 +622,9 @@ class ConfigLoader:
             # 注入到 config_dict，schema 会自动生成这两个字段
             config_dict["DATA_DIR"] = data_dir
             config_dict["LOGS_DIR"] = logs_dir
+            cls._injected_keys.update(("DATA_DIR", "LOGS_DIR"))
+
+        cls._set_config(config_dict)
 
         # 生成/更新 schema.py，并拿到当次运行最新的 AppConfig 类
         LatestAppConfig = cls.sync_schema()
@@ -562,3 +640,60 @@ class ConfigLoader:
         app_config = LatestAppConfig.model_construct(**typed_config)
 
         return app_config
+
+    @classmethod
+    def reload(cls) -> None:
+        """立即回源刷新内存快照（只更新动态读取的数据，不重新生成 schema.py）"""
+        cls._snapshot_at = 0.0
+        cls._refresh_snapshot()
+
+    @classmethod
+    def get_value(cls, key: str, default: Any = _MISSING) -> Any:
+        """动态读取单个配置项，适合在请求处理中读取「可能被修改」的参数
+
+        与启动时生成的 AppConfig 快照不同，本方法会按 DYNAMIC_TTL 检查配置源是否变化，
+        命中 TTL 时只做一次内存字典查找，不会产生网络或磁盘 IO。
+
+        - 读取优先级与启动时一致：环境变量 > 配置源（nacos/apollo/consul/etcd/.env）
+        - key 兼容 `db_host` / `db.host` / `db-host` 三种写法
+        - 值的类型转换规则与启动时一致（true/false → bool、整数 → int、小数 → float）
+
+        Args:
+            key: 配置项名称，需在配置源中存在
+            default: 配置项不存在时返回的默认值；不传且配置项不存在时抛 KeyError
+
+        Returns:
+            配置项的值（已按启动时的规则完成类型转换）
+        """
+        cls._refresh_snapshot()
+        entry = cls._dynamic_index.get(cls._format_key(key))
+        if entry is None:
+            if default is _MISSING:
+                raise KeyError(f"配置项不存在: {key}")
+            return default
+        return cls._cast_value(entry[1], cls._infer_type(str(entry[1])))
+
+    @classmethod
+    def get_json_value(cls, key: str, default: Any = _MISSING) -> Any:
+        """动态读取 JSON 格式的配置项（如 `{"a": 1}`、`[1, 2]`）
+
+        - 值本身已是 dict/list 时直接返回
+        - JSON 解析失败：传了 default 返回 default，否则抛 ValueError
+        - 兜底规则同 get_value：配置项不存在时，传了 default 返回 default，否则抛 KeyError
+        """
+        try:
+            value = cls.get_value(key)
+        except KeyError:
+            if default is _MISSING:
+                raise
+            return default
+
+        if not isinstance(value, str):
+            return value
+        try:
+            return json.loads(value)
+        except ValueError as e:
+            if default is _MISSING:
+                raise ValueError(f"配置项不是合法 JSON: {key}={value!r}") from e
+            logger.warning("[config] 配置项 JSON 解析失败，返回默认值: %s=%r (%s)", key, value, e)
+            return default
